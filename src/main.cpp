@@ -3,7 +3,7 @@
 
 #include "secrets.hpp"
 /* contents of secrets.hpp:
-#define RPC_HOST IPAddress(10,131,103,30)
+#define RPC_HOST "192.168.0.1"
 #define RPC_TOKEN "????"
 */
 
@@ -15,7 +15,8 @@ void setup() {
 	Serial.begin(115200);
 	
 	//TODO connect with WiFi
-	Rpc::setup();
+	Rpc::setName("EspTest");
+	Rpc::setup(RPC_TOKEN,RPC_HOST);
 }
 
 

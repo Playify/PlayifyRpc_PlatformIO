@@ -35,14 +35,21 @@ using Callback=std::function<void(T t)>;
 
 
 namespace Rpc{
+	//Rpc
 	String id;
 	String nameOrId;
 
-	void setup(const String& name=""){
-		id="esp@";
-		id+=WiFi.macAddress();
+	void setName(const String& name){
+		if(!id.length()) id="esp@"+WiFi.macAddress();
 		nameOrId=name!=nullptr?name+" ("+id+")":id;
-		RpcConnection::setup();
+		if(RpcConnection::connected)
+			callRemoteFunction(NULL_STRING,"N",nameOrId);
+	}
+
+	//Connection
+	void setup(const String& rpcToken,String host,uint16_t port=80,String path="/rpc"){
+		id="esp@"+WiFi.macAddress();
+		RpcConnection::setup(rpcToken,std::move(host),port,std::move(path));
 		RegisteredTypes::setup();
 	}
 
@@ -51,13 +58,9 @@ namespace Rpc{
 	}
 
 	bool isConnected(){return RpcConnection::connected;}
-
-	void setName(const String& name){
-		nameOrId=name!=nullptr?name+" ("+id+")":id;
-		if(RpcConnection::connected)
-			callRemoteFunction(NULL_STRING,"N",nameOrId);
-	}
-
+	
+	
+	//Functions
 	RpcObject createObject(String type){return RpcObject(std::move(type));}
 
 	RpcFunction createFunction(String type,String method){return RpcFunction(std::move(type),std::move(method));}
@@ -72,20 +75,22 @@ namespace Rpc{
 		if(func.type!=("$"+id))return;
 		RegisteredTypes::registeredFunctions.erase(func.method);
 	}
+	
+	//callLocal not supported
 
 	template<typename... Args>
 	PendingCall callFunction(String type,String method,Args... args){
 		return callRemoteFunction(type,method,args...);
 	}
 
-	//FunctionCallContext getFunctionContext();
-
+	//Types
 	std::map<String,CallReceiver>* registerType(const String& type){return RegisteredTypes::registerType(type);}
 
 	void registerType(const String& type,std::map<String,CallReceiver>* map){RegisteredTypes::registerType(type,map);}
 
 	void unregisterType(const String& type){RegisteredTypes::unregisterType(type,true);}
 
+	
 	void checkTypes(const std::vector<String>& types,const Callback<int32_t>& callback){
 		callFunction(NULL_STRING,"?",MultipleArguments<String>(types))
 			.then([callback](DataInput data){

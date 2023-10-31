@@ -1,12 +1,4 @@
-
 #include "WebSocketsClient.h"
-
-#ifndef RPC_TOKEN
-#error RPC_TOKEN is not defined
-#endif
-#ifndef RPC_HOST
-#error RPC_HOST is not defined
-#endif
 
 namespace RpcConnection{
 
@@ -25,10 +17,10 @@ namespace RpcConnection{
 	void doConnect();
 	void doDisconnect();
 	
-	void setup(){
+	void setup(const String& rpcToken,String host,uint16_t port,String path){
 		webSocket.onEvent(onEvent);
-		webSocket.begin(RPC_HOST,80,"/rpc");
-		webSocket.setExtraHeaders("Cookie: token=" RPC_TOKEN ";");
+		webSocket.begin(std::move(host),port,std::move(path));
+		webSocket.setExtraHeaders(("Cookie: RPC_TOKEN="+rpcToken).c_str());
 		webSocket.setReconnectInterval(5000);
 
 
