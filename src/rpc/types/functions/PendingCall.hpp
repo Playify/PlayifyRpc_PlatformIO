@@ -1,5 +1,3 @@
-#include <utility>
-
 
 
 using MessageFunc=std::function<void(DataInput rawData)>;
@@ -73,11 +71,11 @@ struct PendingCall{
 
 	explicit PendingCall(const std::shared_ptr<PendingCall::Shared>& data):_data(data){}
 
-	bool isCancelled(){
+	bool isCancelled()const{
 		return _data->isCancelled;
 	}
 
-	void cancel(){
+	void cancel()const{
 		if(_data->isCancelled)return;
 		_data->isCancelled=true;
 		if(!_data->state){
@@ -90,7 +88,7 @@ struct PendingCall{
 
 
 	template<typename... Args>
-	void sendMessage(Args... args){
+	void sendMessage(Args... args)const{
 		if(_data->state)return;
 
 		DataOutput data;
@@ -100,17 +98,17 @@ struct PendingCall{
 		RpcConnection::send(data);
 	}
 
-	void setMessageListener(MessageFunc func){_data->setMessageListener(std::move(func));}
+	void setMessageListener(MessageFunc func)const{_data->setMessageListener(std::move(func));}
 
 	template<typename... Args>
-	void setMessageListener(std::function<void(Args...)> func){_data->setMessageListener(createMessageFunc(func));}
+	void setMessageListener(std::function<void(Args...)> func)const{_data->setMessageListener(createMessageFunc(func));}
 	
 
-	PendingCallState state(){
+	PendingCallState state()const{
 		return _data->state;
 	}
 
-	void then(const std::function<void(DataInput result)>& onSuccess,const std::function<void(RpcError)>& onError){
+	void then(const std::function<void(DataInput result)>& onSuccess,const std::function<void(RpcError)>& onError)const{
 		switch(_data->state){
 			case Pending:
 				_data->onSuccess=onSuccess;
@@ -127,8 +125,9 @@ struct PendingCall{
 		}
 	}
 
+	//TODO use make_function
 	template<typename T>
-	void then(const std::function<void(T result)>& onSuccess,const std::function<void(RpcError)>& onError){
+	void then(const std::function<void(T result)>& onSuccess,const std::function<void(RpcError)>& onError)const{
 		then(std::function<void(DataInput result)>([onSuccess,onError](DataInput data){
 				if(!DynamicData::callDynamic(data,onSuccess)&&onError!=nullptr)
 					onError(RpcError("Error casting result"));

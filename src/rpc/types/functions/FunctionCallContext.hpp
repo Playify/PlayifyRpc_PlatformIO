@@ -39,17 +39,17 @@ struct FunctionCallContext{
 
 	explicit FunctionCallContext(const std::shared_ptr<FunctionCallContext::Shared>& data):_data(data){}
 
-	bool isFinished(){
+	bool isFinished() const{
 		return _data->isFinished;
 	}
-	bool isCancelled(){
+	bool isCancelled() const{
 		return _data->isCancelled;
 	}
 
-	void cancel(){
+	void cancel() const{
 		_data->cancel();
 	}
-	void onCancel(const std::function<void()>& onCancel){
+	void onCancel(const std::function<void()>& onCancel) const{
 		if(_data->isCancelled)onCancel();
 		else _data->onCancel=onCancel;
 	}
@@ -57,7 +57,7 @@ struct FunctionCallContext{
 
 
 	template<typename... Args>
-	void sendMessage(Args... args){
+	void sendMessage(Args... args)const{
 		if(_data->isFinished)return;
 
 		DataOutput data;
@@ -67,15 +67,15 @@ struct FunctionCallContext{
 		RpcConnection::send(data);
 	}
 
-	void setMessageListener(MessageFunc func){_data->setMessageListener(std::move(func));}
+	void setMessageListener(MessageFunc func) const{_data->setMessageListener(std::move(func));}
 	template<typename... Args>
-	void setMessageListener(std::function<void(Args...)> func){_data->setMessageListener(createMessageFunc(func));}
+	void setMessageListener(std::function<void(Args...)> func) const{_data->setMessageListener(createMessageFunc(func));}
 	
 	
 
 
 	template<typename T>
-	void resolve(T result){
+	void resolve(T result)const{
 		if(_data->isFinished)return;
 		_data->isFinished=true;
 		
@@ -85,7 +85,7 @@ struct FunctionCallContext{
 		DynamicData::writeDynamic(data,result);
 		RpcConnection::send(data);
 	}
-	void reject(const RpcError& error){
+	void reject(const RpcError& error)const{
 		if(_data->isFinished)return;
 		_data->isFinished=true;
 

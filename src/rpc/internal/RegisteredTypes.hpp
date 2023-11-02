@@ -8,7 +8,11 @@ using CallReceiver=std::function<void(FunctionCallContext ctx,DataInput args)>;
 
 namespace RegisteredTypes{
 	std::map<String,std::map<String,CallReceiver>*> registered;
+#if ESP32
 	uint32_t nextFunctionId=esp_random();
+#elif ESP8266
+	uint32_t nextFunctionId=os_random();
+#endif
 	std::map<String,CallReceiver> registeredFunctions;
 	
 	void registerType(const String& type,std::map<String,CallReceiver>* map){

@@ -49,7 +49,7 @@ namespace RpcConnection{
 				}
 
 				const auto& map=*typeIterator->second;
-				const auto& methodIterator=map.find(type);
+				const auto& methodIterator=map.find(method);
 				if(methodIterator==map.end()){
 					fcc.reject(RpcError("Method is not defined on this type"));
 					break;

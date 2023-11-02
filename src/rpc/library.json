@@ -1,0 +1,22 @@
+{
+	"name": "playify-rpc",
+	"version": "0.0.0",
+	"description": "Playify RPC Client",
+	"keywords": "rpc",
+	"repository":{
+		"type": "git",
+		"url": "https://github.com/Playify/PlayifyRpc_PlatformIO"
+	},
+	"authors":{
+		"name": "Playify",
+		"email": "shulkerhd@gmail.com",
+		"url": "https://playify.cf",
+		"maintainer": true
+	},
+	"homepage": "https://playify.cf",
+	"dependencies": {
+		"links2004/WebSockets":"^2.3.7"
+	},
+	"frameworks": "*",
+	"platforms": "*"
+}

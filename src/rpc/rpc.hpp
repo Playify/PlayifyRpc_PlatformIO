@@ -1,7 +1,13 @@
 #include <utility>
 
+#if ESP32
 #include "WiFi.h"
+#elif ESP8266
+#include "ESP8266WiFi.h"
+#endif
+
 #include "vector"
+#include "internal/make_function.hpp"
 
 struct PendingCall;
 
@@ -57,13 +63,13 @@ namespace Rpc{
 		RpcConnection::loop();
 	}
 
-	bool isConnected(){return RpcConnection::connected;}
-	
-	
-	//Functions
-	RpcObject createObject(String type){return RpcObject(std::move(type));}
+	bool isConnected(){ return RpcConnection::connected; }
 
-	RpcFunction createFunction(String type,String method){return RpcFunction(std::move(type),std::move(method));}
+
+	//Functions
+	RpcObject createObject(String type){ return RpcObject(std::move(type)); }
+
+	RpcFunction createFunction(String type,String method){ return RpcFunction(std::move(type),std::move(method)); }
 
 	RpcFunction registerFunction(CallReceiver func){
 		String method(RegisteredTypes::nextFunctionId++);
@@ -75,7 +81,7 @@ namespace Rpc{
 		if(func.type!=("$"+id))return;
 		RegisteredTypes::registeredFunctions.erase(func.method);
 	}
-	
+
 	//callLocal not supported
 
 	template<typename... Args>
@@ -84,21 +90,21 @@ namespace Rpc{
 	}
 
 	//Types
-	std::map<String,CallReceiver>* registerType(const String& type){return RegisteredTypes::registerType(type);}
+	std::map<String,CallReceiver>* registerType(const String& type){ return RegisteredTypes::registerType(type); }
 
-	void registerType(const String& type,std::map<String,CallReceiver>* map){RegisteredTypes::registerType(type,map);}
+	void registerType(const String& type,std::map<String,CallReceiver>* map){ RegisteredTypes::registerType(type,map); }
 
-	void unregisterType(const String& type){RegisteredTypes::unregisterType(type,true);}
+	void unregisterType(const String& type){ RegisteredTypes::unregisterType(type,true); }
 
-	
+
 	void checkTypes(const std::vector<String>& types,const Callback<int32_t>& callback){
 		callFunction(NULL_STRING,"?",MultipleArguments<String>(types))
-			.then([callback](DataInput data){
-				if(data.readLength()=='i') callback(data.readInt());
-				else callback(-1);
-			},[callback](const RpcError&){
-				callback(-1);
-			});
+				.then([callback](DataInput data){
+					if(data.readLength()=='i') callback(data.readInt());
+					else callback(-1);
+				},[callback](const RpcError&){
+					callback(-1);
+				});
 	}
 
 	void checkType(const String& type,const Callback<bool>& callback){

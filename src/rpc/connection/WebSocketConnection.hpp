@@ -56,7 +56,7 @@ namespace RpcConnection{
 				Serial.println((char*)payload);
 				break;
 			case WStype_BIN:{
-				Serial.printf("[WebSocket] recv: %u\n",length);
+				//Serial.printf("[WebSocket] recv: %u\n",length);
 				
 				receiveRpc(DataInput(payload,length));
 				break;
