@@ -52,3 +52,13 @@ namespace RegisteredTypes{
 		registerType("$"+Rpc::id,&registeredFunctions);
 	}
 }
+
+template<typename T>
+CallReceiver make_callReceiver(T t){
+	auto func=make_function(t);
+	return [func](const FunctionCallContext& ctx,DataInput data){
+		if(!DynamicData::callDynamicArray(data,removeConstReferenceParameters(func),ctx)){
+			ctx.reject(RpcError("Arguments do not meet parameter types"));
+		}
+	};
+}

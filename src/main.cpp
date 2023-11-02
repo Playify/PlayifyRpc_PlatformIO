@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <WebSocketsClient.h>
 
+
 #include "secrets.hpp"
 /* contents of secrets.hpp:
 #define RPC_HOST "192.168.0.1"
@@ -13,10 +14,24 @@
 
 void setup() {
 	Serial.begin(115200);
-	
+
 	//TODO connect with WiFi
 	Rpc::setName("EspTest");
 	Rpc::setup(RPC_TOKEN,RPC_HOST);
+
+	auto test=Rpc::registerType("EspTest");
+
+	(*test)["func"]=CallReceiver([](const FunctionCallContext& ctx,const MultipleArguments<String>& args){
+		String result;
+		for(const auto& s: args)result+=s;
+
+		ctx.resolve(result);
+	});
+	
+/*
+	const PendingCall& call=Rpc::callFunction("","");
+	call.then([](int z){
+	});*/
 }
 
 

@@ -1,5 +1,5 @@
 
-
+struct FunctionCallContext;
 
 namespace DynamicData{
 	template<typename T>
@@ -9,7 +9,7 @@ namespace DynamicData{
 	template<typename T>
 	bool readDynamic(DataInput& data,T& value){
 		int32_t args=1;
-		return readDynamic(data,args,value)&&args==0;
+		return readDynamic(data,args,value)&&args==0;//TODO compiler says args==0 is always false
 	}
 
 
@@ -55,7 +55,6 @@ namespace DynamicData{
 			return readDynamic(d,argCount,curr)&&readAll(d,argCount,rest...);
 		}
 	}
-
 	
 	template<typename... Args>
 	bool readDynamicArray(DataInput& data,Args& ... args){
@@ -79,6 +78,30 @@ namespace DynamicData{
 		if(b) Apply::apply(func,argsTuple);
 		return b;
 	}
+	//*
+	template<typename Arg0,typename... Args>
+	bool callDynamicArray(DataInput& data,std::function<void(Arg0,Args...)> func,const Arg0& ctx){
+		std::tuple<Arg0,Args...> argsTuple;
+
+		bool b=Apply::apply([&data,&ctx](Arg0& arg0,Args& ... args){
+			arg0=ctx;
+			return readDynamicArray(data,args...);
+		},argsTuple);
+		if(b) Apply::apply(func,argsTuple);
+		return b;
+	}/*/
+	void _assignCtx(const FunctionCallContext& ctx,FunctionCallContext& curr);
+	template<typename... Args>
+	bool callDynamicArray(DataInput& data,std::function<void(FunctionCallContext,Args...)> func,const FunctionCallContext& ctx){
+		std::tuple<FunctionCallContext,Args...> argsTuple;
+
+		bool b=Apply::apply([&data,&ctx](FunctionCallContext& arg0,Args& ... args){
+			_assignCtx(ctx,arg0);
+			return readDynamicArray(data,args...);
+		},argsTuple);
+		if(b) Apply::apply(func,argsTuple);
+		return b;
+	}//*/
 
 	template<typename Arg>
 	bool callDynamic(DataInput& data,std::function<void(Arg)> func){

@@ -76,6 +76,12 @@ namespace Rpc{
 		RegisteredTypes::registeredFunctions[method]=std::move(func);
 		return RpcFunction("$"+id,method);
 	}
+	template<typename CallReceiver>
+	RpcFunction registerFunction(CallReceiver func){
+		String method(RegisteredTypes::nextFunctionId++);
+		RegisteredTypes::registeredFunctions[method]=CallReceiver(func);
+		return RpcFunction("$"+id,method);
+	}
 
 	void unregisterFunction(const RpcFunction& func){
 		if(func.type!=("$"+id))return;
@@ -95,6 +101,9 @@ namespace Rpc{
 	void registerType(const String& type,std::map<String,CallReceiver>* map){ RegisteredTypes::registerType(type,map); }
 
 	void unregisterType(const String& type){ RegisteredTypes::unregisterType(type,true); }
+
+	template<typename T>
+	CallReceiver callReceiver(T t){return make_callReceiver(t);}//Helper for registering functions inside a type
 
 
 	void checkTypes(const std::vector<String>& types,const Callback<int32_t>& callback){

@@ -1,7 +1,6 @@
 #include <utility>
 
 
-
 struct FunctionCallContext{
 
 	struct Shared{
@@ -14,6 +13,7 @@ struct FunctionCallContext{
 		std::function<void()> onCancel;
 
 		MessageFunc listener=nullptr;
+
 		void setMessageListener(MessageFunc func){
 			listener=std::move(func);
 		}
@@ -25,6 +25,7 @@ struct FunctionCallContext{
 			}
 			listener(data);
 		}
+
 		void cancel(){
 			if(isFinished||isCancelled)return;
 			isCancelled=true;
@@ -35,13 +36,16 @@ struct FunctionCallContext{
 		}
 	};
 
-	const std::shared_ptr<FunctionCallContext::Shared> _data;
+	std::shared_ptr<FunctionCallContext::Shared> _data;
+
+	FunctionCallContext():_data(){}
 
 	explicit FunctionCallContext(const std::shared_ptr<FunctionCallContext::Shared>& data):_data(data){}
 
 	bool isFinished() const{
 		return _data->isFinished;
 	}
+
 	bool isCancelled() const{
 		return _data->isCancelled;
 	}
@@ -49,15 +53,15 @@ struct FunctionCallContext{
 	void cancel() const{
 		_data->cancel();
 	}
+
 	void onCancel(const std::function<void()>& onCancel) const{
 		if(_data->isCancelled)onCancel();
 		else _data->onCancel=onCancel;
 	}
 
 
-
 	template<typename... Args>
-	void sendMessage(Args... args)const{
+	void sendMessage(Args... args) const{
 		if(_data->isFinished)return;
 
 		DataOutput data;
@@ -68,24 +72,24 @@ struct FunctionCallContext{
 	}
 
 	void setMessageListener(MessageFunc func) const{_data->setMessageListener(std::move(func));}
+
 	template<typename... Args>
 	void setMessageListener(std::function<void(Args...)> func) const{_data->setMessageListener(createMessageFunc(func));}
-	
-	
 
 
 	template<typename T>
-	void resolve(T result)const{
+	void resolve(T result) const{
 		if(_data->isFinished)return;
 		_data->isFinished=true;
-		
+
 		DataOutput data;
 		data.writeByte(RpcConnection::PacketType::FunctionSuccess);
 		data.writeLength(_data->callId);
 		DynamicData::writeDynamic(data,result);
 		RpcConnection::send(data);
 	}
-	void reject(const RpcError& error)const{
+
+	void reject(const RpcError& error) const{
 		if(_data->isFinished)return;
 		_data->isFinished=true;
 
@@ -96,3 +100,9 @@ struct FunctionCallContext{
 		RpcConnection::send(data);
 	}
 };
+
+namespace DynamicData{
+	void _assignCtx(const FunctionCallContext& ctx,FunctionCallContext& curr){
+		curr=ctx;
+	}
+}
