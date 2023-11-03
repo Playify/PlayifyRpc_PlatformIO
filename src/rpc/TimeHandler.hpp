@@ -39,48 +39,7 @@ constexpr Duration operator "" _s(unsigned long long t){return Duration::seconds
 constexpr Duration operator "" _ms(unsigned long long t){return Duration::millis(t);}
 constexpr Duration operator "" _us(unsigned long long t){return Duration::micros(t);}
 
-#undef min
-template<typename T>
-constexpr T min(T a,T b){
-	return a<b?a:b;
-}
-#undef max
-template<typename T>
-constexpr T max(T a,T b){
-	return a<b?b:a;
-}
-#undef abs
-template<typename T>
-constexpr T abs(T a){
-	return a<0?-a:a;
-}
 
-void hexdump(const void* data,size_t length){
-	const auto* bytes=reinterpret_cast<const uint8_t*>(data);
-	char hex[3];
-	hex[2]='\0';
-
-	for(size_t i=0;i<length;++i){
-		uint8_t byte=bytes[i];
-
-		// Print the hexadecimal representation
-		sprintf(hex,"%02X",byte);
-		Serial.print(hex);
-		Serial.print(' ');
-
-		// Print the ASCII representation
-		if(byte>=0x20&&byte<=0x7E) Serial.print(static_cast<char>(byte));
-		else Serial.print('.');
-
-
-		// Add a newline after every 16 bytes
-		if((i+1)%16==0) Serial.println();
-		else Serial.print(" | ");
-	}
-
-	// Add a newline if necessary
-	if(length%16!=0) Serial.println();
-}
 
 namespace TimeHandler{
 	uint32_t lastTime;
@@ -131,8 +90,4 @@ namespace TimeHandler{
 		lastTime+=delta;
 		deltaTime=Duration::micros(delta);
 	}
-}/*
-extern void* operator new(size_t,void*) noexcept;//Somewhere already declared
-bool strEquals(const char* a,const char* b){return strcmp(a,b)==0;}
-
-*/
+}
