@@ -100,10 +100,12 @@ struct PendingCall{
 		RpcConnection::send(data);
 	}
 
-	void setMessageListener(MessageFunc func) const{_data->setMessageListener(std::move(func));}
+	void setMessageListener(MessageFunc func) const{ _data->setMessageListener(std::move(func)); }
 
 	template<typename... Args>
-	void setMessageListener(std::function<void(Args...)> func) const{_data->setMessageListener(createMessageFunc(func));}
+	void setMessageListener(std::function<void(Args...)> func) const{
+		_data->setMessageListener(createMessageFunc(func));
+	}
 
 
 	PendingCallState state() const{
@@ -140,7 +142,8 @@ struct PendingCall{
 		return *this;
 	}
 
-	const PendingCall& then(const std::function<void(DataInput result)>& onSuccess,const std::function<void(RpcError error)>& onError) const{
+	const PendingCall& then(const std::function<void(DataInput result)>& onSuccess,
+							const std::function<void(RpcError error)>& onError) const{
 		switch(_data->state){
 			case Pending:
 				_data->onSuccess=onSuccess;
@@ -164,11 +167,19 @@ struct PendingCall{
 private:
 
 	template<typename T>
-	const PendingCall& _then(const std::function<void(T result)>& onSuccess,const std::function<void(RpcError error)>& onError) const{
+	const PendingCall&
+	_then(const std::function<void(T result)>& onSuccess,const std::function<void(RpcError error)>& onError) const{
 		return then(std::function<void(DataInput result)>([onSuccess,this](DataInput data){
 			if(!DynamicData::callDynamic(data,onSuccess)&&_data->onError!=nullptr)
 				_data->onError(RpcError("Error casting result"));
 		}),onError);
+	}
+
+	const PendingCall&
+	_then(const std::function<void()>& onSuccess,const std::function<void(RpcError error)>& onError) const{
+		return then(
+				{[onSuccess](DataInput data){ onSuccess(); }},
+				onError);
 	}
 
 	template<typename T>
@@ -179,17 +190,33 @@ private:
 		}));
 	}
 
+	const PendingCall& _then(const std::function<void()>& onSuccess) const{
+		return then(std::function<void(DataInput)>([onSuccess](DataInput){
+			onSuccess();
+		}));
+	}
+
 public:
 	template<typename T>
-	const PendingCall& then(const std::function<void(T result)>& onSuccess) const{return _then(onSuccess);}
+	const PendingCall& then(const std::function<void(T result)>& onSuccess) const{ return _then(onSuccess); }
+
+	const PendingCall& then(const std::function<void()>& onSuccess) const{ return _then(onSuccess); }
 
 	template<typename SuccessFunc>
 	const PendingCall& then(const SuccessFunc& onSuccess) const{
 		return _then(removeConstReferenceParameters(make_function(onSuccess)));
 	}
-	
+
 	template<typename T>
-	const PendingCall& then(const std::function<void(T result)>& onSuccess,const std::function<void(RpcError error)>& onError) const{return _then(onSuccess,onError);}
+	const PendingCall& then(const std::function<void(T result)>& onSuccess,
+							const std::function<void(RpcError error)>& onError) const{
+		return _then(onSuccess,onError);
+	}
+
+	const PendingCall&
+	then(const std::function<void()>& onSuccess,const std::function<void(RpcError error)>& onError) const{
+		return _then(onSuccess,onError);
+	}
 
 	template<typename SuccessFunc>
 	const PendingCall& then(const SuccessFunc& onSuccess,const std::function<void(RpcError error)>& onError) const{

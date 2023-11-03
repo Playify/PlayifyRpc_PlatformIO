@@ -8,6 +8,7 @@
 #define RPC_TOKEN "????"
 */
 
+#include "rpc/TimeHandler.hpp"
 #include "rpc/rpc.hpp"
 
 
@@ -21,17 +22,18 @@ void setup() {
 
 	auto test=Rpc::registerType("EspTest");
 
-	(*test)["func"]=CallReceiver([](const FunctionCallContext& ctx,const MultipleArguments<String>& args){
+	(*test)["func"]=Rpc::createCallReceiver([](const FunctionCallContext& ctx,const MultipleArguments<String>& args){
 		String result;
 		for(const auto& s: args)result+=s;
 
 		ctx.resolve(result);
 	});
-	
-/*
-	const PendingCall& call=Rpc::callFunction("","");
-	call.then([](int z){
-	});*/
+
+
+	Rpc::callFunction("EspTest","func").then([](String z){
+	});
+	Rpc::callFunction("EspTest","func").then([](){
+	});
 }
 
 

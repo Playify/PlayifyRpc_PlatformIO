@@ -9,9 +9,10 @@ public:
 	uint32_t _available;
 	
 public:
-	static DataInput empty(){
-		return DataInput(nullptr,0);
-	}
+	DataInput():
+		_data(nullptr),
+		_available(0)
+	{}
 	DataInput(uint8_t* data,uint32_t length):
 		_data(data),
 		_available(length)

@@ -103,7 +103,7 @@ namespace Rpc{
 	void unregisterType(const String& type){ RegisteredTypes::unregisterType(type,true); }
 
 	template<typename T>
-	CallReceiver callReceiver(T t){return make_callReceiver(t);}//Helper for registering functions inside a type
+	CallReceiver createCallReceiver(T t){return make_callReceiver(t);}//Helper for registering functions inside a type
 
 
 	void checkTypes(const std::vector<String>& types,const Callback<int32_t>& callback){
