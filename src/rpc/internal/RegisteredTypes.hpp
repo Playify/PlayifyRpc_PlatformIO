@@ -1,49 +1,55 @@
-#include <utility>
-
-#include "map"
+#include <map>
 
 using CallReceiver=std::function<void(FunctionCallContext ctx,DataInput args)>;
 
 
+struct IgnoreCase {
+	bool operator() (const String& cs1, const String& cs2) const {
+		String s1=cs1;
+		String s2=cs2;
+		s1.toLowerCase();
+		s2.toLowerCase();
+		return  s1 < s2;
+	}
+};
+using RegisteredType=std::map<String,CallReceiver,IgnoreCase>;
+
 
 namespace RegisteredTypes{
-	std::map<String,std::map<String,CallReceiver>*> registered;
+	std::map<String,std::pair<RegisteredType*,bool>> registered;
 #if ESP32
 	uint32_t nextFunctionId=esp_random();
 #elif ESP8266
 	uint32_t nextFunctionId=os_random();
 #endif
-	std::map<String,CallReceiver> registeredFunctions;
-	
-	void registerType(const String& type,std::map<String,CallReceiver>* map){
-		if(registered.count(type)){
-			auto& pointer=registered[type];
-			if(pointer!=map)delete pointer;
-			pointer=map;
-		}else registered[type]=map;
+	RegisteredType registeredFunctions;
 
-		if(RpcConnection::connected){
+	void registerType(const String& type,RegisteredType* map,bool deletePointer=false){
+		if(registered.count(type)){
+			auto& pair=registered[type];
+			if(pair.first!=map&&pair.second)delete pair.first;
+			pair=std::make_pair(map,deletePointer);
+		}else registered[type]=std::make_pair(map,deletePointer);
+
+		if(RpcConnection::connected)
 			callRemoteFunction(NULL_STRING,"+",type);
-		}
 	}
-	void registerType(const String& type,std::map<String,CallReceiver> map){
-		registerType(type,new std::map<String,CallReceiver>(std::move(map)));
-	}
-	std::map<String,CallReceiver>* registerType(const String& type){
-		auto map=new std::map<String,CallReceiver>();
-		registerType(type,map);
+
+	RegisteredType* registerType(const String& type){
+		auto map=new RegisteredType();
+		registerType(type,map,true);
 		return map;
 	}
-	
-	void unregisterType(const String& type,bool deletePointer){
-		if(!registered.count(type))return;
 
-		if(RpcConnection::connected){
-			callRemoteFunction(NULL_STRING,"-",type);
-		}
+	void unregisterType(const String& type){
+		auto it = registered.find(type);
+		if(it==registered.end()) return;
 		
-		if(deletePointer) delete registered[type];
-		registered.erase(type);
+		if(RpcConnection::connected)
+			callRemoteFunction(NULL_STRING, "-", type);
+
+		if(it->second.second)delete it->second.first;
+		registered.erase(it);
 	}
 
 

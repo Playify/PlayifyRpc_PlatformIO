@@ -3,13 +3,17 @@ struct FunctionCallContext;
 
 namespace DynamicData{
 	template<typename T>
-	bool readDynamic(DataInput& data,int& argCount,T& value);
-
+	bool read(DataInput& data,int& argCount,T& value);
 
 	template<typename T>
 	bool readDynamic(DataInput& data,T& value){
-		int32_t args=1;
-		return readDynamic(data,args,value)&&args==0;//TODO compiler says args==0 is always false
+		DataInput backup;
+		int args=1;
+		if(read(data,args,value)&&(args&-1)==0)
+			return true;
+		data._data=backup._data;
+		data._available=backup._available;
+		return false;
 	}
 
 
@@ -37,7 +41,7 @@ namespace DynamicData{
 	}
 
 	namespace ReadAll{
-		bool readAll(DataInput& d,int& argCount){return argCount==0;}
+		bool readAll(DataInput&,int& argCount){return argCount==0;}
 		template<typename T>
 		bool readAll(DataInput& d,int& argCount,MultipleArguments<T>& value){
 			if(argCount==0)return true;
@@ -116,7 +120,7 @@ namespace DynamicData{
 
 namespace DynamicData{
 	template<>
-	bool readDynamic(DataInput& data,int& argCount,nullptr_t&){
+	bool read(DataInput&data,int&argCount,nullptr_t&){
 		if(argCount==0)return false;
 		if(data.readLength()=='n'){
 			argCount--;
@@ -124,8 +128,9 @@ namespace DynamicData{
 		}
 		return false;
 	}
+
 	template<>
-	bool readDynamic(DataInput& data,int& argCount,bool& value){
+	bool read(DataInput&data,int&argCount,bool&value){
 		if(argCount==0)return false;
 		switch(data.readLength()){
 			case 't':
@@ -140,8 +145,9 @@ namespace DynamicData{
 				return false;
 		}
 	}
+
 	template<>
-	bool readDynamic(DataInput& data,int& argCount,int32_t& value){
+	bool read(DataInput&data,int&argCount,int32_t&value){
 		if(argCount==0)return false;
 		switch(data.readLength()){
 			case 'i':
@@ -160,8 +166,9 @@ namespace DynamicData{
 				return false;
 		}
 	}
+
 	template<>
-	bool readDynamic(DataInput& data,int& argCount,String& value){
+	bool read(DataInput&data,int&argCount,String&value){
 		if(argCount==0)return false;
 		int32_t type=data.readLength();
 		if(type=='n'){

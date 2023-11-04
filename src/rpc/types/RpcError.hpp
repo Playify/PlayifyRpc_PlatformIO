@@ -13,7 +13,7 @@ struct RpcError{
 		type("RpcERR"),
 		from(Rpc::nameOrId),
 		msg(msg),
-		stackTrace("<<not supported>>"){}
+		stackTrace("<<StackTrace not supported>>"){}
 
 	explicit RpcError(String type,String from,String message,String stackTrace):
 		type(std::move(type)),
@@ -21,7 +21,7 @@ struct RpcError{
 		msg(std::move(message)),
 		stackTrace(std::move(stackTrace)){}
 
-	void printStackTrace(){
+	void printStackTrace() const{
 		Serial.print(type);
 		Serial.print('(');
 		Serial.print(from);

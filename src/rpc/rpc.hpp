@@ -96,11 +96,12 @@ namespace Rpc{
 	}
 
 	//Types
-	std::map<String,CallReceiver>* registerType(const String& type){ return RegisteredTypes::registerType(type); }
+	RegisteredType* registerType(const String& type){ return RegisteredTypes::registerType(type); }
 
-	void registerType(const String& type,std::map<String,CallReceiver>* map){ RegisteredTypes::registerType(type,map); }
+	void registerType(const String& type,RegisteredType* map){ RegisteredTypes::registerType(type,map); }
+	void registerType(const String& type,RegisteredType& map){ RegisteredTypes::registerType(type,&map); }
 
-	void unregisterType(const String& type){ RegisteredTypes::unregisterType(type,true); }
+	void unregisterType(const String& type){ RegisteredTypes::unregisterType(type); }
 
 	template<typename T>
 	CallReceiver createCallReceiver(T t){return make_callReceiver(t);}//Helper for registering functions inside a type

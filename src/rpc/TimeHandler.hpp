@@ -73,10 +73,10 @@ namespace TimeHandler{
 			return true;
 		}
 	}
-	bool cyclicEvent(Duration& timer,Duration duration,bool resetNow){
+	bool cyclicEvent(Duration& timer,Duration duration,bool resetNow,bool triggerOnReset=true){
 		if(resetNow){
 			timer=duration;
-			return true;
+			return triggerOnReset;
 		}
 		return cyclicEvent(timer,duration);
 	}
