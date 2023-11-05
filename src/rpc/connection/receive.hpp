@@ -2,7 +2,7 @@
 
 namespace RpcConnection{
 	std::map<int32_t,std::shared_ptr<FunctionCallContext::Shared>> currentlyExecuting;
-	
+
 	void onError(const RpcError& e){
 		Serial.println("Error connecting to Server");
 		e.printStackTrace();
@@ -35,13 +35,13 @@ namespace RpcConnection{
 		switch(packetType){
 			case FunctionCall:{
 				int32_t callId=data.readLength();
-				
+
 				String type=data.readString();
 				String method=data.readString();
-				
+
 				auto shared=std::make_shared<FunctionCallContext::Shared>(callId);
 				auto fcc=FunctionCallContext(shared);
-				
+
 				const auto& typeIterator=RegisteredTypes::registered.find(type);
 				if(typeIterator==RegisteredTypes::registered.end()){
 					fcc.reject(RpcError("Type is not registered on this device"));
@@ -54,7 +54,7 @@ namespace RpcConnection{
 					fcc.reject(RpcError("Method is not defined on this type"));
 					break;
 				}
-				
+
 				methodIterator->second(fcc,data);
 				break;
 			}
@@ -63,6 +63,7 @@ namespace RpcConnection{
 				const auto& it=activeRequests.find(callId);
 				if(it==activeRequests.end())break;
 				it->second->resolve(data);
+				activeRequests.erase(it);
 				break;
 			}
 			case FunctionError:{
@@ -70,6 +71,7 @@ namespace RpcConnection{
 				const auto& it=activeRequests.find(callId);
 				if(it==activeRequests.end())break;
 				it->second->reject(data.readError());
+				activeRequests.erase(it);
 				break;
 			}
 			case FunctionCancel:{
