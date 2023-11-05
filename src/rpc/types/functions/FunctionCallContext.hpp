@@ -74,7 +74,7 @@ struct FunctionCallContext{
 	void setMessageListener(MessageFunc func) const{_data->setMessageListener(std::move(func));}
 
 	template<typename... Args>
-	void setMessageListener(std::function<void(Args...)> func) const{_data->setMessageListener(createMessageFunc(func));}
+	void setMessageListener(std::function<void(Args...)> func) const{_data->setMessageListener(make_messageFunc(func));}
 
 
 	template<typename T>

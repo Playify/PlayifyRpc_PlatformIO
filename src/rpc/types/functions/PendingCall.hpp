@@ -2,12 +2,13 @@
 
 using MessageFunc=std::function<void(DataInput rawData)>;
 
-template<typename... Args>
-MessageFunc createMessageFunc(std::function<void(Args...)> func){
-	return MessageFunc([func](DataInput data){
-		if(!DynamicData::callDynamicArray(data,func))
+template<typename T>
+MessageFunc make_messageFunc(T t){
+	auto func=make_function(t);
+	return [func](DataInput data){
+		if(!DynamicData::callDynamicArray(data,removeConstReferenceParameters(func)))
 			Serial.println("Discarding Message, unable to dynamically read for listener");
-	});
+	};
 }
 
 
@@ -69,15 +70,17 @@ struct PendingCall{
 	};
 
 
-	const std::shared_ptr<PendingCall::Shared> _data;
+	std::shared_ptr<PendingCall::Shared> _data;
 
+	explicit PendingCall():_data(){}
 	explicit PendingCall(const std::shared_ptr<PendingCall::Shared>& data):_data(data){}
 
 	bool isCancelled() const{
-		return _data->isCancelled;
+		return _data&&_data->isCancelled;
 	}
 
 	void cancel() const{
+		if(!_data)return;
 		if(_data->isCancelled)return;
 		_data->isCancelled=true;
 		if(!_data->state){
@@ -91,6 +94,7 @@ struct PendingCall{
 
 	template<typename... Args>
 	void sendMessage(Args... args) const{
+		if(!_data)return;
 		if(_data->state)return;
 
 		DataOutput data;
@@ -100,19 +104,25 @@ struct PendingCall{
 		RpcConnection::send(data);
 	}
 
-	void setMessageListener(MessageFunc func) const{ _data->setMessageListener(std::move(func)); }
+	void setMessageListener(MessageFunc func) const{
+		if(!_data)return;
+		_data->setMessageListener(std::move(func));
+	}
 
 	template<typename... Args>
 	void setMessageListener(std::function<void(Args...)> func) const{
-		_data->setMessageListener(createMessageFunc(func));
+		if(!_data)return;
+		_data->setMessageListener(make_messageFunc(func));
 	}
 
 
 	PendingCallState state() const{
+		if(!_data)return PendingCallState::Error;
 		return _data->state;
 	}
 
 	const PendingCall& then(const std::function<void(DataInput result)>& onSuccess) const{
+		if(!_data) return *this;
 		switch(_data->state){
 			case Pending:
 				_data->onSuccess=onSuccess;
@@ -128,6 +138,11 @@ struct PendingCall{
 	}
 
 	const PendingCall& onError(const std::function<void(RpcError error)>& onError) const{
+		if(!_data){
+			if(onError!=nullptr)
+				onError(RpcError("PendingCall not initialized"));
+			return *this;	
+		}
 		switch(_data->state){
 			case Pending:
 				_data->onError=onError;
@@ -144,6 +159,11 @@ struct PendingCall{
 
 	const PendingCall& then(const std::function<void(DataInput result)>& onSuccess,
 							const std::function<void(RpcError error)>& onError) const{
+		if(!_data){
+			if(onError!=nullptr)
+				onError(RpcError("PendingCall not initialized"));
+			return *this;
+		}
 		switch(_data->state){
 			case Pending:
 				_data->onSuccess=onSuccess;
@@ -169,9 +189,10 @@ private:
 	template<typename T>
 	const PendingCall&
 	_then(const std::function<void(T result)>& onSuccess,const std::function<void(RpcError error)>& onError) const{
-		return then(std::function<void(DataInput result)>([onSuccess,this](DataInput data){
-			if(!DynamicData::callDynamic(data,onSuccess)&&_data->onError!=nullptr)
-				_data->onError(RpcError("Error casting result"));
+		auto sharedData=_data;
+		return then(std::function<void(DataInput result)>([onSuccess,sharedData](DataInput data){
+			if(!DynamicData::callDynamic(data,onSuccess)&&sharedData&&sharedData->onError!=nullptr)
+				sharedData->onError(RpcError("Error casting result"));
 		}),onError);
 	}
 
@@ -184,9 +205,10 @@ private:
 
 	template<typename T>
 	const PendingCall& _then(const std::function<void(T result)>& onSuccess) const{
-		return then(std::function<void(DataInput result)>([onSuccess,this](DataInput data){
-			if(!DynamicData::callDynamic(data,onSuccess)&&_data->onError!=nullptr)
-				_data->onError(RpcError("Error casting result"));
+		auto sharedData=_data;
+		return then(std::function<void(DataInput result)>([onSuccess,sharedData](DataInput data){
+			if(!DynamicData::callDynamic(data,onSuccess)&&sharedData&&sharedData->onError!=nullptr)
+				sharedData->onError(RpcError("Error casting result"));
 		}));
 	}
 

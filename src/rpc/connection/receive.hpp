@@ -3,17 +3,17 @@
 namespace RpcConnection{
 	std::map<int32_t,std::shared_ptr<FunctionCallContext::Shared>> currentlyExecuting;
 	
-	void onError(RpcError e){
+	void onError(const RpcError& e){
 		Serial.println("Error connecting to Server");
 		e.printStackTrace();
 		webSocket.disconnect();
 	}
 
 	void doConnect(){
-		callRemoteFunction(NULL_STRING,"N",Rpc::nameOrId).then([](DataInput){
+		callRemoteFunction(NULL_STRING,"N",Rpc::nameOrId).then([](){
 			MultipleArguments<String> args;
 			for(const auto& pair: RegisteredTypes::registered) args.push_back(pair.first);
-			callRemoteFunction(NULL_STRING,"+",args).then([](DataInput){
+			callRemoteFunction(NULL_STRING,"+",args).then([](){
 				connected=true;
 				Serial.println("Connected to Server");
 			},onError);
@@ -48,7 +48,7 @@ namespace RpcConnection{
 					break;
 				}
 
-				const auto& map=*typeIterator->second;
+				const auto& map=*typeIterator->second.first;
 				const auto& methodIterator=map.find(method);
 				if(methodIterator==map.end()){
 					fcc.reject(RpcError("Method is not defined on this type"));

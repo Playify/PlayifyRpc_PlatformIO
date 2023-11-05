@@ -48,7 +48,7 @@ namespace DynamicData{
 			value.reserve(argCount);
 			while(argCount-->0){
 				T entry;
-				if(!readDynamic(d,entry))return false;
+				if(!read(d,argCount,entry))return false;
 				value.push_back(entry);
 			}
 			return true;
@@ -56,7 +56,7 @@ namespace DynamicData{
 
 		template<typename T,typename... Args>
 		bool readAll(DataInput& d,int& argCount,T& curr,Args&... rest){
-			return readDynamic(d,argCount,curr)&&readAll(d,argCount,rest...);
+			return read(d,argCount,curr)&&readAll(d,argCount,rest...);
 		}
 	}
 	

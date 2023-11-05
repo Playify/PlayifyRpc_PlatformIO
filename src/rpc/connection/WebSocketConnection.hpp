@@ -17,9 +17,9 @@ namespace RpcConnection{
 	void doConnect();
 	void doDisconnect();
 	
-	void setup(const String& rpcToken,String host,uint16_t port,String path){
+	void setup(const String& rpcToken,const String& host,uint16_t port,const String& path){
 		webSocket.onEvent(onEvent);
-		webSocket.begin(std::move(host),port,std::move(path));
+		webSocket.begin(host,port,path);
 		webSocket.setExtraHeaders(("Cookie: RPC_TOKEN="+rpcToken).c_str());
 		webSocket.setReconnectInterval(5000);
 

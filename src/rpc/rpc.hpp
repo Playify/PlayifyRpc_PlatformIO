@@ -53,9 +53,9 @@ namespace Rpc{
 	}
 
 	//Connection
-	void setup(const String& rpcToken,String host,uint16_t port=80,String path="/rpc"){
-		id="esp@"+WiFi.macAddress();
-		RpcConnection::setup(rpcToken,std::move(host),port,std::move(path));
+	void setup(const String& rpcToken,const String& host,uint16_t port=80,const String& path="/rpc"){
+		id=String("esp@")+WiFi.getHostname()+"@"+WiFi.macAddress();
+		RpcConnection::setup(rpcToken,host,port,path);
 		RegisteredTypes::setup();
 	}
 
@@ -105,6 +105,8 @@ namespace Rpc{
 
 	template<typename T>
 	CallReceiver createCallReceiver(T t){return make_callReceiver(t);}//Helper for registering functions inside a type
+	template<typename T>
+	MessageFunc createMessageFunc(T t){return make_messageFunc(t);}//Helper for registering functions as message receiver
 
 
 	void checkTypes(const std::vector<String>& types,const Callback<int32_t>& callback){
