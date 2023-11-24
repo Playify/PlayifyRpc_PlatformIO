@@ -36,6 +36,8 @@ namespace Rpc{
 
 #include "connection/receive.hpp"
 
+#include "utils/RpcListener.hpp"
+
 template<typename T=void>
 using Callback=std::function<void(T t)>;
 
