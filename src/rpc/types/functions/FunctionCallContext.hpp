@@ -17,7 +17,6 @@ struct FunctionCallContext{
 		void setMessageListener(MessageFunc func){
 			listener=std::move(func);
 		}
-
 		void doReceive(DataInput data) const{
 			if(listener==nullptr){
 				Serial.println("Discarding Message, as no listener was defined");
@@ -38,23 +37,26 @@ struct FunctionCallContext{
 
 	std::shared_ptr<FunctionCallContext::Shared> _data;
 
-	FunctionCallContext():_data(){}
+	constexpr FunctionCallContext():_data(){}
+	constexpr FunctionCallContext(nullptr_t):_data(){}
 
 	explicit FunctionCallContext(const std::shared_ptr<FunctionCallContext::Shared>& data):_data(data){}
 
-	bool isFinished() const{
-		return _data->isFinished;
+	[[nodiscard]] bool isFinished() const{
+		return !_data||_data->isFinished;
 	}
 
-	bool isCancelled() const{
-		return _data->isCancelled;
+	[[nodiscard]] bool isCancelled() const{
+		return !_data||_data->isCancelled;
 	}
 
-	void cancel() const{
+	void cancelSelf() const{
+		if(!_data)return;
 		_data->cancel();
 	}
 
 	void onCancel(const std::function<void()>& onCancel) const{
+		if(!_data)return;
 		if(_data->isCancelled)onCancel();
 		else _data->onCancel=onCancel;
 	}
@@ -62,6 +64,7 @@ struct FunctionCallContext{
 
 	template<typename... Args>
 	void sendMessage(Args... args) const{
+		if(!_data)return;
 		if(_data->isFinished)return;
 
 		DataOutput data;
@@ -71,14 +74,27 @@ struct FunctionCallContext{
 		RpcConnection::send(data);
 	}
 
-	void setMessageListener(MessageFunc func) const{_data->setMessageListener(std::move(func));}
+	void setMessageListener(MessageFunc func) const{
+		if(!_data)return;
+		_data->setMessageListener(std::move(func));
+	}
 
 	template<typename... Args>
-	void setMessageListener(std::function<void(Args...)> func) const{_data->setMessageListener(make_messageFunc(func));}
+	void setMessageListener(std::function<void(Args...)> func) const{
+		if(!_data)return;
+		_data->setMessageListener(make_messageFunc(func));
+	}
+
+	template<typename Func>
+	void setMessageListener(Func func) const{
+		if(!_data)return;
+		_data->setMessageListener(make_messageFunc(func));
+	}
 
 
 	template<typename T>
 	void resolve(T result) const{
+		if(!_data)return;
 		if(_data->isFinished)return;
 		_data->isFinished=true;
 
@@ -90,6 +106,7 @@ struct FunctionCallContext{
 	}
 
 	void reject(const RpcError& error) const{
+		if(!_data)return;
 		if(_data->isFinished)return;
 		_data->isFinished=true;
 
@@ -99,10 +116,14 @@ struct FunctionCallContext{
 		data.writeError(error);
 		RpcConnection::send(data);
 	}
-};
+	void reject(const String& s) const{ reject(RpcError(s.c_str()));}
+	void reject(const char*& s) const{ reject(RpcError(s));}
 
-namespace DynamicData{
-	void _assignCtx(const FunctionCallContext& ctx,FunctionCallContext& curr){
-		curr=ctx;
-	}
-}
+	bool operator <(const FunctionCallContext& other) const{ return _data<other._data; }
+
+	bool operator >(const FunctionCallContext& other) const{ return _data>other._data; }
+
+	bool operator ==(const FunctionCallContext& other) const{ return _data==other._data; }
+
+	explicit operator bool() const{ return bool(_data); }
+};

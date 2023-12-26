@@ -6,7 +6,7 @@ template<typename T>
 MessageFunc make_messageFunc(T t){
 	auto func=make_function(t);
 	return [func](DataInput data){
-		if(!DynamicData::callDynamicArray(data,removeConstReferenceParameters(func)))
+		if(!data.tryCall(func))
 			Serial.println("Discarding Message, unable to dynamically read for listener");
 	};
 }
@@ -75,7 +75,7 @@ struct PendingCall{
 	explicit PendingCall():_data(){}
 	explicit PendingCall(const std::shared_ptr<PendingCall::Shared>& data):_data(data){}
 
-	bool isCancelled() const{
+	[[nodiscard]] bool isCancelled() const{
 		return _data&&_data->isCancelled;
 	}
 
@@ -115,8 +115,14 @@ struct PendingCall{
 		_data->setMessageListener(make_messageFunc(func));
 	}
 
+	template<typename Func>
+	void setMessageListener(Func func) const{
+		if(!_data)return;
+		_data->setMessageListener(make_messageFunc(func));
+	}
 
-	PendingCallState state() const{
+
+	[[nodiscard]] PendingCallState state() const{
 		if(!_data)return PendingCallState::Error;
 		return _data->state;
 	}
@@ -191,7 +197,8 @@ private:
 	_then(const std::function<void(T result)>& onSuccess,const std::function<void(RpcError error)>& onError) const{
 		auto sharedData=_data;
 		return then(std::function<void(DataInput result)>([onSuccess,sharedData](DataInput data){
-			if(!DynamicData::callDynamic(data,onSuccess)&&sharedData&&sharedData->onError!=nullptr)
+			
+			if(!data.tryCallSingle(onSuccess)&&sharedData&&sharedData->onError!=nullptr)
 				sharedData->onError(RpcError("Error casting result"));
 		}),onError);
 	}
@@ -207,7 +214,7 @@ private:
 	const PendingCall& _then(const std::function<void(T result)>& onSuccess) const{
 		auto sharedData=_data;
 		return then(std::function<void(DataInput result)>([onSuccess,sharedData](DataInput data){
-			if(!DynamicData::callDynamic(data,onSuccess)&&sharedData&&sharedData->onError!=nullptr)
+			if(!data.tryCallSingle(onSuccess)&&sharedData&&sharedData->onError!=nullptr)
 				sharedData->onError(RpcError("Error casting result"));
 		}));
 	}
@@ -244,4 +251,14 @@ public:
 	const PendingCall& then(const SuccessFunc& onSuccess,const std::function<void(RpcError error)>& onError) const{
 		return _then(removeConstReferenceParameters(make_function(onSuccess)),onError);
 	}
+
+
+
+	bool operator <(const PendingCall& other) const{ return _data<other._data; }
+
+	bool operator >(const PendingCall& other) const{ return _data>other._data; }
+
+	bool operator ==(const PendingCall& other) const{ return _data==other._data; }
+
+	explicit operator bool() const{ return bool(_data); }
 };

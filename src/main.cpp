@@ -11,6 +11,9 @@
 #include "rpc/TimeHandler.hpp"
 #include "rpc/rpc.hpp"
 
+void func(const int& x){
+	
+}
 
 
 void setup() {
@@ -28,12 +31,32 @@ void setup() {
 
 		ctx.resolve(result);
 	});
+	(*test)["func2"]=Rpc::createCallReceiver([](FunctionCallContext ctx,const MultipleArguments<String>& args){
+		String result;
+		for(const auto& s: args)result+=s;
+
+		ctx.resolve(result);
+	});
+
+	DataInput data;
+	data.tryCall(func);
 
 
 	Rpc::callFunction("EspTest","func").then([](String z){
 	});
 	Rpc::callFunction("EspTest","func").then([](){
 	});
+}
+
+void test(){
+	std::vector<String> null;
+	DataInput data;
+	int i=1;
+	DynamicData::read(data,i,null);
+	DynamicData::readDynamic(data,null);
+	DynamicData::callDynamicSingle(data,make_function([](std::vector<nullptr_t> n){
+
+	}));
 }
 
 

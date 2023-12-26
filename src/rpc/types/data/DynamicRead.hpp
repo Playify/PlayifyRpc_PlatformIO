@@ -4,16 +4,22 @@ struct FunctionCallContext;
 namespace DynamicData{
 	template<typename T>
 	bool read(DataInput& data,int& argCount,T& value);
+	template<typename... T>
+	bool read(DataInput& data,int& argCount,std::vector<T...>& value);
 
 	template<typename T>
 	bool readDynamic(DataInput& data,T& value){
-		DataInput backup;
+		DataInput backup=data;
 		int args=1;
 		if(read(data,args,value)&&(args&-1)==0)
 			return true;
-		data._data=backup._data;
-		data._available=backup._available;
+		data=backup;
 		return false;
+	}
+	template<>
+	bool readDynamic(DataInput& data,DataInput& value){
+		value=data;
+		return true;
 	}
 
 
@@ -21,8 +27,12 @@ namespace DynamicData{
 		template<size_t N>
 		struct Apply{
 			template<typename F,typename T,typename... A>
-			static inline auto apply(F&& f,T&& t,A&& ... a)->decltype(Apply<N-1>::apply(std::forward<F>(f),std::forward<T>(t),std::get<N-1>(std::forward<T>(t)),std::forward<A>(a)...)){
-				return Apply<N-1>::apply(std::forward<F>(f),std::forward<T>(t),std::get<N-1>(std::forward<T>(t)),std::forward<A>(a)...);
+			static inline auto
+			apply(F&& f,T&& t,A&& ... a)->decltype(Apply<N-1>::apply(std::forward<F>(f),std::forward<T>(t),
+																	 std::get<N-1>(std::forward<T>(t)),
+																	 std::forward<A>(a)...)){
+				return Apply<N-1>::apply(std::forward<F>(f),std::forward<T>(t),std::get<N-1>(std::forward<T>(t)),
+										 std::forward<A>(a)...);
 			}
 		};
 
@@ -35,13 +45,16 @@ namespace DynamicData{
 		};
 
 		template<typename F,typename T>
-		inline auto apply(F&& f,T&& t)->decltype(Apply<std::tuple_size<typename std::decay<T>::type>::value>::apply(std::forward<F>(f),std::forward<T>(t))){
-			return Apply<std::tuple_size<typename std::decay<T>::type>::value>::apply(std::forward<F>(f),std::forward<T>(t));
+		inline auto apply(F&& f,T&& t)->decltype(Apply<std::tuple_size<typename std::decay<T>::type>::value>::apply(
+				std::forward<F>(f),std::forward<T>(t))){
+			return Apply<std::tuple_size<typename std::decay<T>::type>::value>::apply(std::forward<F>(f),
+																					  std::forward<T>(t));
 		}
 	}
 
 	namespace ReadAll{
-		bool readAll(DataInput&,int& argCount){return argCount==0;}
+		bool readAll(DataInput&,int& argCount){ return argCount==0; }
+
 		template<typename T>
 		bool readAll(DataInput& d,int& argCount,MultipleArguments<T>& value){
 			if(argCount==0)return true;
@@ -55,60 +68,52 @@ namespace DynamicData{
 		}
 
 		template<typename T,typename... Args>
-		bool readAll(DataInput& d,int& argCount,T& curr,Args&... rest){
+		bool readAll(DataInput& d,int& argCount,T& curr,Args& ... rest){
 			return read(d,argCount,curr)&&readAll(d,argCount,rest...);
 		}
 	}
-	
+
 	template<typename... Args>
 	bool readDynamicArray(DataInput& data,Args& ... args){
 		DataInput backup=data;
 		int32_t argCount=data.readLength();
 		bool b=ReadAll::readAll(data,argCount,args...);
 		if(b)return true;
-		data._data=backup._data;
-		data._available=backup._available;
+		data=backup;
 		return false;
+	}
+	template<>
+	bool readDynamicArray(DataInput& data,DataInput& args){
+		args=data;
+		return true;
 	}
 
 
 	template<typename... Args>
 	bool callDynamicArray(DataInput& data,std::function<void(Args...)> func){
-		std::tuple<Args...> argsTuple;
+		std::tuple<remove_const_ref_pack_t<Args>...> argsTuple;
 
-		bool b=Apply::apply([&data](Args& ... args){
+		bool b=Apply::apply([&data](remove_const_ref_pack_t<Args>& ... args){
 			return readDynamicArray(data,args...);
 		},argsTuple);
 		if(b) Apply::apply(func,argsTuple);
 		return b;
 	}
-	//*
+
 	template<typename Arg0,typename... Args>
 	bool callDynamicArray(DataInput& data,std::function<void(Arg0,Args...)> func,const Arg0& ctx){
-		std::tuple<Arg0,Args...> argsTuple;
+		std::tuple<Arg0,remove_const_ref_pack_t<Args>...> argsTuple;
 
-		bool b=Apply::apply([&data,&ctx](Arg0& arg0,Args& ... args){
+		bool b=Apply::apply([&data,&ctx](Arg0& arg0,remove_const_ref_pack_t<Args>& ... args){
 			arg0=ctx;
 			return readDynamicArray(data,args...);
 		},argsTuple);
-		if(b) Apply::apply(func,argsTuple);
+		if(b) Apply::apply(removeConstReferenceParameters(func),argsTuple);
 		return b;
-	}/*/
-	void _assignCtx(const FunctionCallContext& ctx,FunctionCallContext& curr);
-	template<typename... Args>
-	bool callDynamicArray(DataInput& data,std::function<void(FunctionCallContext,Args...)> func,const FunctionCallContext& ctx){
-		std::tuple<FunctionCallContext,Args...> argsTuple;
-
-		bool b=Apply::apply([&data,&ctx](FunctionCallContext& arg0,Args& ... args){
-			_assignCtx(ctx,arg0);
-			return readDynamicArray(data,args...);
-		},argsTuple);
-		if(b) Apply::apply(func,argsTuple);
-		return b;
-	}//*/
+	}
 
 	template<typename Arg>
-	bool callDynamic(DataInput& data,std::function<void(Arg)> func){
+	bool callDynamicSingle(DataInput& data,std::function<void(Arg)> func){
 		Arg arg;
 
 		if(readDynamic(data,arg)){
@@ -119,8 +124,31 @@ namespace DynamicData{
 }
 
 namespace DynamicData{
+	template<typename T>
+	bool read(DataInput& data,int& argCount,T& value){
+		static_assert(std::is_same<T, void>::value,"DynamicData.read is not implemented for this type");
+		return false;
+	}
+	template<typename... T>
+	bool read(DataInput& data,int& argCount,std::vector<T...>& value){
+		if(argCount==0)return false;
+		int32_t type=data.readLength();
+		if(type<0&&((-type)%4)==3){
+			int32_t count=-type/4;
+			value.resize(count);
+			for(int i=0;i<count;++i){
+				int args=1;
+				if(!read(data,args,value)||(args&-1)!=0)
+					return false;
+			}
+			argCount--;
+			return true;
+		}
+		return false;
+	}
+
 	template<>
-	bool read(DataInput&data,int&argCount,nullptr_t&){
+	bool read(DataInput& data,int& argCount,nullptr_t&){
 		if(argCount==0)return false;
 		if(data.readLength()=='n'){
 			argCount--;
@@ -130,7 +158,7 @@ namespace DynamicData{
 	}
 
 	template<>
-	bool read(DataInput&data,int&argCount,bool&value){
+	bool read(DataInput& data,int& argCount,bool& value){
 		if(argCount==0)return false;
 		switch(data.readLength()){
 			case 't':
@@ -147,7 +175,7 @@ namespace DynamicData{
 	}
 
 	template<>
-	bool read(DataInput&data,int&argCount,int32_t&value){
+	bool read(DataInput& data,int& argCount,int32_t& value){
 		if(argCount==0)return false;
 		switch(data.readLength()){
 			case 'i':
@@ -168,7 +196,28 @@ namespace DynamicData{
 	}
 
 	template<>
-	bool read(DataInput&data,int&argCount,String&value){
+	bool read(DataInput& data,int& argCount,uint16_t& value){
+		if(argCount==0)return false;
+		switch(data.readLength()){
+			case 'i':
+				value=data.readInt();
+				argCount--;
+				return true;
+			case 'd':
+				value=int32_t(data.readDouble());
+				argCount--;
+				return true;
+			case 'l':
+				value=int32_t(data.readLong());
+				argCount--;
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	template<>
+	bool read(DataInput& data,int& argCount,String& value){
 		if(argCount==0)return false;
 		int32_t type=data.readLength();
 		if(type=='n'){
@@ -187,4 +236,28 @@ namespace DynamicData{
 		}
 		return false;
 	}
+	
+}
+
+
+
+template<typename Func>
+bool DataInput::tryCall(Func func){
+	return DynamicData::callDynamicArray(*this,removeConstReferenceParameters(make_function(func)));
+}
+template<typename Func,typename Arg0>
+bool DataInput::tryCall(Func func,const Arg0& arg0){
+	return DynamicData::callDynamicArray(*this,removeConstReferenceParameters(make_function(func)),arg0);
+}
+template<typename Func>
+bool DataInput::tryCallSingle(Func func){
+	return DynamicData::callDynamicSingle(*this,removeConstReferenceParameters(make_function(func)));
+}
+template<typename T>
+bool DataInput::tryGetResult(T value){
+	return DynamicData::readDynamic(*this,value);
+}
+template<typename... Args>
+bool DataInput::tryGetArgs(Args&... args){
+	return DynamicData::readDynamicArray(*this,args...);
 }

@@ -7,18 +7,18 @@ class DataInput{
 public:
 	uint8_t* _data;
 	uint32_t _available;
-	
+
 public:
 	DataInput():
-		_data(nullptr),
-		_available(0)
+			_data(nullptr),
+			_available(0)
 	{}
 	DataInput(uint8_t* data,uint32_t length):
-		_data(data),
-		_available(length)
+			_data(data),
+			_available(length)
 	{}
-	
-	DataInput& operator=(const DataInput&) = delete; // non copyable
+
+	//DataInput& operator=(const DataInput&) = delete; // non copyable
 
 private:
 	template<typename T>
@@ -97,8 +97,20 @@ public:
 
 		return {(char*)arr};
 	}
-	
+
 	RpcError readError(){
 		return RpcError(readString(),readString(),readString(),readString());
 	}
+
+
+	template<typename Func>
+	bool tryCall(Func func);
+	template<typename Func,typename Arg0>
+	bool tryCall(Func func,const Arg0& arg0);
+	template<typename Func>
+	bool tryCallSingle(Func func);
+	template<typename T>
+	bool tryGetResult(T value);
+	template<typename... Args>
+	bool tryGetArgs(Args&... args);
 };
