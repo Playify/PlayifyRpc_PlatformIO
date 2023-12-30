@@ -55,6 +55,10 @@ namespace DynamicData{
 
 
 namespace DynamicData{
+	template<typename T>
+	void writeDynamic(DataOutput& data,T value){
+		static_assert(std::is_same<T, void>::value,"DynamicData.writeDynamic is not implemented for this type");
+	}
 	template<>
 	void writeDynamic(DataOutput& data,nullptr_t){
 		data.writeLength('n');
@@ -97,7 +101,7 @@ namespace DynamicData{
 
 	//No Date, Regex, Exception
 	//TODO RpcObject,RpcFunction
-	
+
 	template<>
 	void writeDynamic(DataOutput& data,String value){
 		data.writeLength(-(value.length()*4+1));

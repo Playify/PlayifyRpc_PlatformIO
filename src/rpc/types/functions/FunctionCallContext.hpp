@@ -116,8 +116,8 @@ struct FunctionCallContext{
 		data.writeError(error);
 		RpcConnection::send(data);
 	}
-	void reject(const String& s) const{ reject(RpcError(s.c_str()));}
-	void reject(const char*& s) const{ reject(RpcError(s));}
+	void reject(const String& msg) const{ reject(RpcError(msg.c_str()));}
+	void reject(const char*& msg) const{ reject(RpcError(msg));}
 
 	bool operator <(const FunctionCallContext& other) const{ return _data<other._data; }
 
