@@ -22,6 +22,7 @@
 	"platforms": "*",
 	"headers":[
 		"rpc.hpp",
-		"TimeHandler.hpp"
+		"TimeHandler.hpp",
+		"WebDebugger.hpp"
 	]
 }

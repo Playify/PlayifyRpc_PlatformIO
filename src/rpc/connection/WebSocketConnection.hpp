@@ -42,7 +42,8 @@ namespace RpcConnection{
 			case WStype_DISCONNECTED:
 				connected=false;
 				doDisconnect();
-				Serial.println("[WebSocket] Disconnected!");
+				if(WiFi.isConnected())Serial.println("[WebSocket] Not yet connected to WiFi");
+				else Serial.println("[WebSocket] Disconnected!");
 				break;
 			case WStype_CONNECTED:{
 				Serial.print("[WebSocket] Connected to url: ");

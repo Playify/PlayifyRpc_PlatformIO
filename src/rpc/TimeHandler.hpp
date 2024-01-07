@@ -91,3 +91,5 @@ namespace TimeHandler{
 		deltaTime=Duration::micros(delta);
 	}
 }
+
+#define DBG_VAR(x) do{Serial.print(#x);Serial.print(':');Serial.println(x);}while(0)

@@ -104,6 +104,7 @@ struct FunctionCallContext{
 		DynamicData::writeDynamic(data,result);
 		RpcConnection::send(data);
 	}
+	void resolve() const{resolve(nullptr);}
 
 	void reject(const RpcError& error) const{
 		if(!_data)return;

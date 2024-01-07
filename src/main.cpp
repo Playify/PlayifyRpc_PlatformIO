@@ -9,6 +9,7 @@
 */
 
 #include "rpc/TimeHandler.hpp"
+#include "rpc/WebDebugger.hpp"
 #include "rpc/rpc.hpp"
 
 void func(const int& x){
