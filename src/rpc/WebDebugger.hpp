@@ -1,3 +1,5 @@
+#include <utility>
+
 #include "Arduino.h"
 
 #if ESP32
@@ -27,8 +29,8 @@ namespace WebDebugger{
 	bool _tryParse(String s,uint8_t& pin){
 		if(!s)return false;
 
-		for(size_t i=0;i<s.length();i++)
-			if(!isDigit(s[i]))
+		for(char i:s)
+			if(!isDigit(i))
 				return false;
 
 		pin=s.toInt();
@@ -37,7 +39,7 @@ namespace WebDebugger{
 
 	template<size_t N>
 	bool _tryParse(String s,const uint8_t(& arr)[N],uint8_t& pin){
-		if(!_tryParse(s,pin))return false;
+		if(!_tryParse(std::move(s),pin))return false;
 		if(pin>=N)return false;
 		pin=arr[pin];
 		return pin!=255;
