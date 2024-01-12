@@ -26,7 +26,7 @@ namespace WebDebugger{
 	String _currSerialCommand="";
 
 
-	bool _tryParse(String s,uint8_t& pin){
+	bool _tryParse(const String& s,uint8_t& pin){
 		if(!s)return false;
 
 		for(char i:s)
@@ -38,14 +38,14 @@ namespace WebDebugger{
 	}
 
 	template<size_t N>
-	bool _tryParse(String s,const uint8_t(& arr)[N],uint8_t& pin){
-		if(!_tryParse(std::move(s),pin))return false;
+	bool _tryParse(const String& s,const uint8_t(& arr)[N],uint8_t& pin){
+		if(!_tryParse(s,pin))return false;
 		if(pin>=N)return false;
 		pin=arr[pin];
 		return pin!=255;
 	}
 
-	bool tryGetPin(String s,uint8_t& pin){//s should be upper case
+	bool tryGetPin(const String& s,uint8_t& pin){//s should be upper case
 #define PINS(prefix,pins...) {static const uint8_t pinsArray[]{pins};if(s[0]==prefix&&_tryParse(s.substring(1),pinsArray,pin))return true;}
 #define PIN(name) if(s==#name){pin=name;return true;}
 
