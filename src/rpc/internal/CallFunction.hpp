@@ -3,6 +3,7 @@ namespace RpcConnection{
 	std::map<int32_t,std::shared_ptr<PendingCall::Shared>> activeRequests;
 	int32_t nextCallId;
 }
+
 template<typename... Args>
 PendingCall callRemoteFunction(String type,String method,Args... args){
 	//Intentionally no check for local functions, as this is for microcontrollers, they shouldn't do any shinanigans with calling own functions

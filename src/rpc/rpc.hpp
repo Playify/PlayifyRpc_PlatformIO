@@ -19,6 +19,9 @@ namespace Rpc{
 	extern String id;
 }
 
+template<typename T=void>
+using Callback=std::function<void(T t)>;
+
 #include "types/RpcError.hpp"
 #include "types/data/DataInput.hpp"
 #include "types/data/DataOutput.hpp"
@@ -38,8 +41,8 @@ namespace Rpc{
 
 #include "utils/RpcListener.hpp"
 
-template<typename T=void>
-using Callback=std::function<void(T t)>;
+#include "types/data/DynamicWrite.Impl.hpp"
+#include "types/data/DynamicRead.Impl.hpp"
 
 
 namespace Rpc{
@@ -48,14 +51,14 @@ namespace Rpc{
 	String nameOrId;
 
 	void setName(const String& name){
-		if(!id.length()) id="esp@"+WiFi.macAddress();
+		if(!id.length()) id=String("esp@")+WiFi.getHostname()+"@"+WiFi.macAddress();
 		nameOrId=name!=nullptr?name+" ("+id+")":id;
 		if(RpcConnection::connected)
 			callRemoteFunction(NULL_STRING,"N",nameOrId);
 	}
 
 	//Connection
-	void setup(const String& rpcToken,const String& host,uint16_t port=80,const String& path="/rpc"){
+	void setup(const String& rpcToken,const String& host,uint16_t port,const String& path="/rpc"){
 		id=String("esp@")+WiFi.getHostname()+"@"+WiFi.macAddress();
 		RpcConnection::setup(rpcToken,host,port,path);
 		RegisteredTypes::setup();
@@ -128,14 +131,24 @@ namespace Rpc{
 	}
 
 	void getAllTypes(const Callback<std::vector<String>>& callback){
-		callFunction(NULL_STRING,"T").then(callback,[callback](const RpcError&){
+		callFunction("Rpc","getAllTypes").then(callback,[callback](const RpcError&){
 			callback(std::vector<String>());
 		});
 	}
 
 	void getAllConnections(const Callback<std::vector<String>>& callback){
-		callFunction(NULL_STRING,"C").then(callback,[callback](const RpcError&){
+		callFunction("Rpc","getAllConnections").then(callback,[callback](const RpcError&){
 			callback(std::vector<String>());
+		});
+	}
+	void getRegistrations(const Callback<std::vector<String>>& callback){
+		callFunction("Rpc","getRegistrations").then(callback,[callback](const RpcError&){
+			callback(std::vector<String>());
+		});
+	}
+	void eval(String expression,const Callback<String>& callback){
+		callFunction("Rpc","eval").then(callback,[callback](const RpcError& e){
+			callback(e.getStackTrace());
 		});
 	}
 }

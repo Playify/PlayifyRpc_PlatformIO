@@ -25,7 +25,7 @@ struct FunctionCallContext{
 			listener(data);
 		}
 
-		void cancel(){
+		void cancelSelf(){
 			if(isFinished||isCancelled)return;
 			isCancelled=true;
 			if(onCancel!=nullptr){
@@ -52,7 +52,7 @@ struct FunctionCallContext{
 
 	void cancelSelf() const{
 		if(!_data)return;
-		_data->cancel();
+		_data->cancelSelf();
 	}
 
 	void onCancel(const std::function<void()>& onCancel) const{

@@ -3,15 +3,16 @@ struct FunctionCallContext;
 
 namespace DynamicData{
 	template<typename T>
-	bool read(DataInput& data,int& argCount,T& value);
+	bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,T& value);
 	template<typename... T>
-	bool read(DataInput& data,int& argCount,std::vector<T...>& value);
+	bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,std::vector<T...>& value);
 
 	template<typename T>
 	bool readDynamic(DataInput& data,T& value){
 		DataInput backup=data;
 		int args=1;
-		if(read(data,args,value)&&(args&-1)==0)
+		auto already=std::vector<DataInput>();
+		if(read(data,args,already,value)&&(args&-1)==0)
 			return true;
 		data=backup;
 		return false;
@@ -53,23 +54,22 @@ namespace DynamicData{
 	}
 
 	namespace ReadAll{
-		bool readAll(DataInput&,int& argCount){ return argCount==0; }
+		bool readAll(DataInput&,int& argCount,std::vector<DataInput>&){ return argCount==0; }
 
 		template<typename T>
-		bool readAll(DataInput& d,int& argCount,MultipleArguments<T>& value){
+		bool readAll(DataInput& d,int& argCount,std::vector<DataInput>& already,MultipleArguments<T>& value){
 			if(argCount==0)return true;
-			value.reserve(argCount);
-			while(argCount-->0){
-				T entry;
-				if(!read(d,argCount,entry))return false;
-				value.push_back(entry);
-			}
+			value.resize(argCount);
+			size_t i=0;
+			while(argCount>0)
+				if(!read(d,argCount,already,value[i++]))
+					return false;
 			return true;
 		}
 
 		template<typename T,typename... Args>
-		bool readAll(DataInput& d,int& argCount,T& curr,Args& ... rest){
-			return read(d,argCount,curr)&&readAll(d,argCount,rest...);
+		bool readAll(DataInput& d,int& argCount,std::vector<DataInput>& already,T& curr,Args& ... rest){
+			return read(d,argCount,already,curr)&&readAll(d,argCount,already,rest...);
 		}
 	}
 
@@ -77,7 +77,8 @@ namespace DynamicData{
 	bool readDynamicArray(DataInput& data,Args& ... args){
 		DataInput backup=data;
 		int32_t argCount=data.readLength();
-		bool b=ReadAll::readAll(data,argCount,args...);
+		auto already=std::vector<DataInput>();
+		bool b=ReadAll::readAll(data,argCount,already,args...);
 		if(b)return true;
 		data=backup;
 		return false;
@@ -122,124 +123,6 @@ namespace DynamicData{
 		}else return false;
 	}
 }
-
-namespace DynamicData{
-	template<typename T>
-	bool read(DataInput& data,int& argCount,T& value){
-		static_assert(std::is_same<T, void>::value,"DynamicData.read is not implemented for this type");
-		return false;
-	}
-	template<typename... T>
-	bool read(DataInput& data,int& argCount,std::vector<T...>& value){
-		if(argCount==0)return false;
-		int32_t type=data.readLength();
-		if(type<0&&((-type)%4)==3){
-			int32_t count=-type/4;
-			value.resize(count);
-			for(int i=0;i<count;++i){
-				int args=1;
-				if(!read(data,args,value)||(args&-1)!=0)
-					return false;
-			}
-			argCount--;
-			return true;
-		}
-		return false;
-	}
-
-	template<>
-	bool read(DataInput& data,int& argCount,nullptr_t&){
-		if(argCount==0)return false;
-		if(data.readLength()=='n'){
-			argCount--;
-			return true;
-		}
-		return false;
-	}
-
-	template<>
-	bool read(DataInput& data,int& argCount,bool& value){
-		if(argCount==0)return false;
-		switch(data.readLength()){
-			case 't':
-				value=true;
-				argCount--;
-				return true;
-			case 'f':
-				value=false;
-				argCount--;
-				return true;
-			default:
-				return false;
-		}
-	}
-
-	template<>
-	bool read(DataInput& data,int& argCount,int32_t& value){
-		if(argCount==0)return false;
-		switch(data.readLength()){
-			case 'i':
-				value=data.readInt();
-				argCount--;
-				return true;
-			case 'd':
-				value=int32_t(data.readDouble());
-				argCount--;
-				return true;
-			case 'l':
-				value=int32_t(data.readLong());
-				argCount--;
-				return true;
-			default:
-				return false;
-		}
-	}
-
-	template<>
-	bool read(DataInput& data,int& argCount,uint16_t& value){
-		if(argCount==0)return false;
-		switch(data.readLength()){
-			case 'i':
-				value=data.readInt();
-				argCount--;
-				return true;
-			case 'd':
-				value=int32_t(data.readDouble());
-				argCount--;
-				return true;
-			case 'l':
-				value=int32_t(data.readLong());
-				argCount--;
-				return true;
-			default:
-				return false;
-		}
-	}
-
-	template<>
-	bool read(DataInput& data,int& argCount,String& value){
-		if(argCount==0)return false;
-		int32_t type=data.readLength();
-		if(type=='n'){
-			value=NULL_STRING;
-			argCount--;
-			return true;
-		}
-		if(type<0&&((-type)%4)==1){
-			int32_t count=-type/4;
-			uint8_t chars[count+1];
-			data.readFully(chars,count);
-			chars[count]=0;
-			value=String((char*)chars);
-			argCount--;
-			return true;
-		}
-		return false;
-	}
-	
-}
-
-
 
 template<typename Func>
 bool DataInput::tryCall(Func func){

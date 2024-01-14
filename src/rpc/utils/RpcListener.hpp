@@ -5,7 +5,8 @@ public:
 	String _type;
 	String _method;
 private:
-	Duration _timeout;
+	uint16_t _lastTime;
+	uint16_t _timeout;
 	PendingCall _call;
 	
 public:
@@ -18,13 +19,19 @@ public:
 			_onDisconnect(std::move(onDisconnect)),
 			_type(std::move(type)),
 			_method(std::move(method)){
+		_lastTime=millis();
 	}
 	
 
 	void loop(){
-		if(!RpcConnection::connected)_timeout=Duration::zero();
-		else if(!_call.state())_timeout=1_s;
-		else if(TimeHandler::cyclicEvent(_timeout,1_s)){
+		auto deltaTime=millis()-_lastTime;
+		_lastTime+=deltaTime;
+		
+		if(!RpcConnection::connected)_timeout=0;
+		else if(!_call.state())_timeout=1000;
+		else if(_timeout>deltaTime)_timeout-=deltaTime;
+		else{
+			_timeout+=1000-deltaTime;
 			_call=callRemoteFunction(_type,_method);
 			_call.setMessageListener(_messageFunc);
 

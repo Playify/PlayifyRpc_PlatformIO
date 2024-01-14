@@ -16,12 +16,21 @@ namespace RpcConnection{
 	void onEvent(WStype_t type, uint8_t * payload, size_t length);
 	void doConnect();
 	void doDisconnect();
+	String createUrl(String path);
+	
+	String _host;
+	uint16_t _port;
+	String _path;
+	uint32_t lastTime;
+	uint32_t _reconnect;
+	bool _disconnect;
 	
 	void setup(const String& rpcToken,const String& host,uint16_t port,const String& path){
 		webSocket.onEvent(onEvent);
-		webSocket.begin(host,port,path);
+		_host=host;
+		_port=port;
+		_path=path;
 		webSocket.setExtraHeaders(("Cookie: RPC_TOKEN="+rpcToken).c_str());
-		webSocket.setReconnectInterval(5000);
 
 
 		// start heartbeat (optional)
@@ -29,10 +38,34 @@ namespace RpcConnection{
 		// expect pong from server within 3000 ms
 		// consider connection disconnected if pong is not received 2 times
 		webSocket.enableHeartbeat(15000, 3000, 2);
+		
+		lastTime=millis();
+		_reconnect=1;
 	}
 	
 	void loop(){
-		webSocket.loop();
+		auto deltaTime=millis()-lastTime;
+		lastTime+=deltaTime;
+		
+		if(_disconnect){
+			webSocket.disconnect();
+		}
+
+		
+		if(_reconnect==0)
+			webSocket.loop();
+
+		if(!WiFi.isConnected())_reconnect=1;
+		else{
+			if(_reconnect>deltaTime){
+				_reconnect-=deltaTime;
+			}else if(_reconnect){
+				_reconnect=0;
+				webSocket.disconnect();
+				webSocket.begin(_host,_port,createUrl(_path));
+				webSocket.loop();
+			}
+		}
 	}
 
 	void receiveRpc(DataInput data);
@@ -42,8 +75,10 @@ namespace RpcConnection{
 			case WStype_DISCONNECTED:
 				connected=false;
 				doDisconnect();
-				if(WiFi.isConnected())Serial.println("[WebSocket] Not yet connected to WiFi");
+				if(!WiFi.isConnected())Serial.println("[WebSocket] Not yet connected to WiFi");
 				else Serial.println("[WebSocket] Disconnected!");
+				
+				_reconnect=5000;
 				break;
 			case WStype_CONNECTED:{
 				Serial.print("[WebSocket] Connected to url: ");
@@ -62,6 +97,7 @@ namespace RpcConnection{
 				receiveRpc(DataInput(payload,length));
 				break;
 			}
+			//TODO continuation frames
 			default:
 				break;
 		}

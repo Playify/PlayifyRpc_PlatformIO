@@ -96,6 +96,24 @@ namespace WebDebugger{
 			_locked=false;
 			return "Program unpaused";
 		}
+		if(cmd=="IP")return "IP is "+WiFi.localIP().toString();
+		if(cmd=="GATEWAY")return "Gateway is "+WiFi.gatewayIP().toString();
+		if(cmd=="SUBNET")return "Subnet is "+WiFi.subnetMask().toString();
+		if(cmd=="MAC")return "MAC is "+WiFi.macAddress();
+		if(cmd=="WIFI"){
+			auto status=WiFi.status();
+			static const char* statuses[]{
+					"WL_IDLE_STATUS",
+					"WL_NO_SSID_AVAIL",
+					"WL_SCAN_COMPLETED",
+					"WL_CONNECTED",
+					"WL_CONNECT_FAILED",
+					"WL_CONNECTION_LOST",
+					"WL_WRONG_PASSWORD",
+					"WL_DISCONNECTED",
+					"???"};
+			return "Wifi status: "+String(status)+"="+statuses[status<=7?status:8];
+		}
 
 
 		//setter command
@@ -172,7 +190,8 @@ namespace WebDebugger{
 		do{
 			while(serial&&Serial.available()){
 				auto c=char(Serial.read());
-				if(c!='\n')_currSerialCommand+=c;
+				if(c=='\b')_currSerialCommand=_currSerialCommand.substring(0,_currSerialCommand.length()-1);
+				else if(c!='\n')_currSerialCommand+=c;
 				else{
 					_currSerialCommand.trim();
 					if(_currSerialCommand.length())_lastSerialCommand=_currSerialCommand;

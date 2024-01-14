@@ -21,19 +21,30 @@ struct RpcError{
 		msg(std::move(message)),
 		stackTrace(std::move(stackTrace)){}
 
-	void printStackTrace() const{
-		Serial.print(type);
-		Serial.print('(');
-		Serial.print(from);
-		Serial.print(')');
+	void printStackTrace(Print& out=Serial) const{
+		out.print(type);
+		out.print('(');
+		out.print(from);
+		out.print(')');
 
 		if(msg.length()&&msg!=NULL_STRING){
-			Serial.print(": ");
-			Serial.print(msg);
+			out.print(": ");
+			out.print(msg);
 		}
-		Serial.println();
+		out.println();
 		if(stackTrace.length()&&stackTrace!=NULL_STRING){
-			Serial.println(stackTrace);
+			out.println(stackTrace);
 		}
+	}
+	String getStackTrace() const{
+		String result=type+'('+from+')';
+
+		if(msg.length()&&msg!=NULL_STRING)
+			result+=": "+msg;
+		result+="\n";
+		if(stackTrace.length()&&stackTrace!=NULL_STRING)
+			result+=stackTrace;
+		
+		return result;
 	}
 };

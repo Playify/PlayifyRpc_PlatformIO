@@ -26,6 +26,11 @@ public:
 	void write(uint8_t* buf, uint16_t len){insert(end(),buf,buf+len);}
 
 	void write(const DataOutput& data){insert(end(),data.begin(),data.end());}
+	void write(DataInput& data){
+		write(data._data,data._available);
+		data._data+=data._available;
+		data._available=0;
+	}
 
 	void writeBoolean(const bool v){writeByte(v);}
 	void writeByte(const uint8_t v){push_back(v);}
