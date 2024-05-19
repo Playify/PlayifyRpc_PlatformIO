@@ -49,7 +49,17 @@ namespace DynamicData{
 	}
 
 	//No Date, Regex, Exception
-	//TODO RpcObject,RpcFunction
+	template<>
+	void writeDynamic(DataOutput& data,RpcObject value){
+		data.writeLength('O');
+		data.writeString(value.type);
+	}
+	template<>
+	void writeDynamic(DataOutput& data,RpcFunction value){
+		data.writeLength('F');
+		data.writeString(value.type);
+		data.writeString(value.method);
+	}
 
 	template<>
 	void writeDynamic(DataOutput& data,String value){

@@ -30,12 +30,16 @@ namespace RpcConnection{
 	}
 
 	String createUrl(String path){
-		reportedName=Rpc::nameOrId;
-		path+="?name="+urlEncode(reportedName);
+		path+="?id="+Rpc::id;
+		reportedName=Rpc::name;
+		if(reportedName!=NULL_STRING)
+			path+="&name="+urlEncode(reportedName);
 		reportedTypes.resize(RegisteredTypes::registered.size());
 		size_t i=0;
+		String dollarId="$"+Rpc::id;
 		for(const auto& pair:RegisteredTypes::registered){
-			path+="&type="+urlEncode(pair.first);
+			if(pair.first!=dollarId)
+				path+="&type="+urlEncode(pair.first);
 			reportedTypes[i++]=pair.first;
 		}
 
@@ -65,12 +69,12 @@ namespace RpcConnection{
 
 		PendingCall call;
 		if(!toRegister.empty()||!toDelete.empty())
-			if(Rpc::nameOrId!=reportedName)
-				call=callRemoteFunction(NULL_STRING,"H",Rpc::nameOrId,toRegister,toDelete);
+			if(Rpc::name!=reportedName)
+				call=callRemoteFunction(NULL_STRING,"H",Rpc::name,toRegister,toDelete);
 			else
 				call=callRemoteFunction(NULL_STRING,"H",toRegister,toDelete);
-		else if(Rpc::nameOrId!=reportedName)
-			call=callRemoteFunction(NULL_STRING,"H",Rpc::nameOrId);
+		else if(Rpc::name!=reportedName)
+			call=callRemoteFunction(NULL_STRING,"H",Rpc::name);
 
 		reportedTypes.clear();
 		reportedName=NULL_STRING;

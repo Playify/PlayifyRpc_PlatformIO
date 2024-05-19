@@ -11,7 +11,7 @@ struct RpcError{
 
 	explicit RpcError(const char* msg):
 		type("RpcERR"),
-		from(Rpc::nameOrId),
+		from(Rpc::prettyName()),
 		msg(msg),
 		stackTrace("<<StackTrace not supported>>"){}
 

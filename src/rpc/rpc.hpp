@@ -15,7 +15,8 @@ template<typename... Args>
 PendingCall callRemoteFunction(String type,String method,Args... args);
 
 namespace Rpc{
-	extern String nameOrId;
+	extern String name;
+	extern String prettyName();
 	extern String id;
 }
 
@@ -48,13 +49,13 @@ using Callback=std::function<void(T t)>;
 namespace Rpc{
 	//Rpc
 	String id;
-	String nameOrId;
+	String prettyName(){return name!=NULL_STRING?name+" ("+id+")":id;}
+	String name=NULL_STRING;
 
-	void setName(const String& name){
-		if(!id.length()) id=String("esp@")+WiFi.getHostname()+"@"+WiFi.macAddress();
-		nameOrId=name!=nullptr?name+" ("+id+")":id;
+	void setName(const String& n){
+		name=n;
 		if(RpcConnection::connected)
-			callRemoteFunction(NULL_STRING,"N",nameOrId);
+			callRemoteFunction(NULL_STRING,"N",name);
 	}
 
 	//Connection
@@ -146,9 +147,15 @@ namespace Rpc{
 			callback(std::vector<String>());
 		});
 	}
-	void eval(String expression,const Callback<String>& callback){
-		callFunction("Rpc","eval").then(callback,[callback](const RpcError& e){
+	void evalString(String expression,const Callback<String>& callback){
+		callFunction("Rpc","evalString",expression).then(callback,[callback](const RpcError& e){
 			callback(e.getStackTrace());
 		});
 	}
+	template<typename T>
+	void evalObject(String expression,const Callback<T>& callback,const Callback<RpcError> onError){
+		callFunction("Rpc","evalObject",expression).then(callback,onError);
+	}
+	
+	//Rpc.listenCalls() is not supported in C++
 }
