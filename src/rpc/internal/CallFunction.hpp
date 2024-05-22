@@ -22,7 +22,7 @@ PendingCall callRemoteFunction(String type,String method,Args... args){
 
 
 	if(!(RpcConnection::connected||(type==NULL_STRING&&RpcConnection::webSocket.isConnected()))){
-		shared->reject(RpcError("Not connected"));
+		shared->reject(RpcConnectionError("Not connected"));
 		return PendingCall(shared);
 	}
 

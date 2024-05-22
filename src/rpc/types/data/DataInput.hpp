@@ -99,7 +99,14 @@ public:
 	}
 
 	RpcError readError(){
-		return RpcError(readString(),readString(),readString(),readString());
+		String type=readString();
+		String from=readString();
+		if(from==NULL_STRING)from="???";
+		String message=readString();
+		String stackTrace=readString();
+		if(stackTrace==NULL_STRING)stackTrace="";
+		String jsonData=_available?readString():R"json({"$info":"JsonData was not included, due to an old PlayifyRpc version"})json";
+		return RpcError(type,from,message,stackTrace,jsonData);
 	}
 
 

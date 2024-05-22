@@ -24,6 +24,7 @@ template<typename T=void>
 using Callback=std::function<void(T t)>;
 
 #include "types/RpcError.hpp"
+#include "types/Errors/PredefinedErrors.hpp"
 #include "types/data/DataInput.hpp"
 #include "types/data/DataOutput.hpp"
 #include "types/data/DynamicWrite.hpp"

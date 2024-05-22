@@ -67,7 +67,8 @@ public:
 	void writeError(const RpcError& error){
 		writeString(error.type);
 		writeString(error.from);
-		writeString(error.msg);
+		writeString(error.message);
 		writeString(error.stackTrace);
+		writeString(error.jsonData);
 	}
 };

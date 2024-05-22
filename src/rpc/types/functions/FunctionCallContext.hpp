@@ -6,8 +6,14 @@ struct FunctionCallContext{
 	struct Shared{
 		bool isFinished=false;
 		const int32_t callId;
+		const String type;
+		const String method;
 
-		explicit Shared(int32_t callId):callId(callId){}
+		explicit Shared(int32_t callId,String type,String method):
+		callId(callId),
+		type(type),
+		method(method)
+		{}
 
 		bool isCancelled=false;
 		std::function<void()> onCancel;
@@ -114,7 +120,10 @@ struct FunctionCallContext{
 		DataOutput data;
 		data.writeByte(RpcConnection::PacketType::FunctionError);
 		data.writeLength(_data->callId);
-		data.writeError(error);
+		data.writeError(error.append(
+				(_data->type==NULL_STRING?"<<null>>":_data->type)+"."+
+				(_data->method==NULL_STRING?"<<null>>":_data->method)+"(...)"
+				));
 		RpcConnection::send(data);
 	}
 	void reject(const String& msg) const{ reject(RpcError(msg.c_str()));}

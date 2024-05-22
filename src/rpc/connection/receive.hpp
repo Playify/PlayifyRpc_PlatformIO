@@ -95,7 +95,7 @@ namespace RpcConnection{
 	}
 
 	void doDisconnect(){
-		static const RpcError error("Connection closed");
+		static const RpcConnectionError error("Connection closed");
 
 		for(const auto& item:activeRequests)item.second->reject(error);
 		activeRequests.clear();
@@ -103,7 +103,7 @@ namespace RpcConnection{
 		for(const auto& item:currentlyExecuting)item.second->cancelSelf();
 	}
 
-	void callMeta(const FunctionCallContext& fcc,const RegisteredType& invoker,DataInput input);
+	void callMeta(const FunctionCallContext& fcc,const RegisteredType& invoker,DataInput input,const String& string);
 
 	void receiveRpc(DataInput data){
 		auto packetType=PacketType(data.readByte());
@@ -115,28 +115,27 @@ namespace RpcConnection{
 				String type=data.readString();
 				String method=data.readString();
 
-				auto shared=std::make_shared<FunctionCallContext::Shared>(callId);
+				auto shared=std::make_shared<FunctionCallContext::Shared>(callId,type,method);
 				auto fcc=FunctionCallContext(shared);
 
 				const auto& typeIterator=RegisteredTypes::registered.find(type);
 				if(typeIterator==RegisteredTypes::registered.end()){
-					fcc.reject(RpcError("Type is not registered on this device"));
+					fcc.reject(RpcTypeNotFoundError(type));
+					break;
+				}
+				
+				const auto& map=*typeIterator->second.first;
+				if(method==NULL_STRING){
+					callMeta(fcc,map,data,type);
 					break;
 				}
 
-				const auto& map=*typeIterator->second.first;
 				const auto& methodIterator=map.find(method);
-				if(methodIterator==map.end()){
-					if(method!=NULL_STRING){
-						fcc.reject(RpcError("Method is not defined on this type"));
-						break;
-					}else{
-						callMeta(fcc,map,data);
-						break;
-					}
-				}
-
-				methodIterator->second(fcc,data);
+				if(methodIterator!=map.end())
+					methodIterator->second(fcc,data);
+				else
+					fcc.reject(RpcMethodNotFoundError(type,method));
+				
 				break;
 			}
 			case FunctionSuccess:{
@@ -179,19 +178,19 @@ namespace RpcConnection{
 		}
 	}
 
-	void callMeta(const FunctionCallContext& fcc,const RegisteredType& invoker,DataInput input){
-		String arg0;
-		if(input.tryGetArgs(arg0)){
-			if(arg0=="M"){
+	void callMeta(const FunctionCallContext& fcc,const RegisteredType& invoker,DataInput input,const String& type){
+		String meta;
+		if(input.tryGetArgs(meta)){
+			if(meta=="M"){
 				std::vector<String> methods(invoker.size());
 				size_t i=0;
 				for(const auto& pair:invoker) methods[i++]=pair.first;
 				fcc.resolve(methods);
 				return;
 			}
-		}
-
-		fcc.reject("Invalid meta-call");
+		}else meta=NULL_STRING;
+		
+		fcc.reject(RpcMetaMethodNotFoundError(type,meta));
 	}
 
 }
