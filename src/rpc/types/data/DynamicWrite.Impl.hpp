@@ -17,7 +17,27 @@ namespace DynamicData{
 	void writeDynamic(DataOutput& data,bool value){
 		data.writeLength(value?'t':'f');
 	}
-
+	
+	template<>
+	void writeDynamic(DataOutput& data,int8_t value){
+		data.writeLength('i');
+		data.writeInt(value);
+	}
+	template<>
+	void writeDynamic(DataOutput& data,uint8_t value){
+		data.writeLength('i');
+		data.writeInt(value);
+	}
+	template<>
+	void writeDynamic(DataOutput& data,int16_t value){
+		data.writeLength('i');
+		data.writeInt(value);
+	}
+	template<>
+	void writeDynamic(DataOutput& data,uint16_t value){
+		data.writeLength('i');
+		data.writeInt(value);
+	}
 	template<>
 	void writeDynamic(DataOutput& data,int32_t value){
 		data.writeLength('i');
@@ -25,13 +45,7 @@ namespace DynamicData{
 	}
 
 	template<>
-	void writeDynamic(DataOutput& data,double value){
-		data.writeLength('d');
-		data.writeDouble(value);
-	}
-
-	template<>
-	void writeDynamic(DataOutput& data,uint64_t value){
+	void writeDynamic(DataOutput& data,uint32_t value){
 		data.writeLength('l');
 		data.writeLong(value);
 	}
@@ -40,6 +54,22 @@ namespace DynamicData{
 	void writeDynamic(DataOutput& data,int64_t value){
 		data.writeLength('l');
 		data.writeLong(value);
+	}
+	template<>
+	void writeDynamic(DataOutput& data,uint64_t value){
+		data.writeLength('l');
+		data.writeLong(value);
+	}
+
+	template<>
+	void writeDynamic(DataOutput& data,float value){
+		data.writeLength('d');
+		data.writeDouble(value);
+	}
+	template<>
+	void writeDynamic(DataOutput& data,double value){
+		data.writeLength('d');
+		data.writeDouble(value);
 	}
 
 	template<>

@@ -97,6 +97,13 @@ struct FunctionCallContext{
 		_data->setMessageListener(make_messageFunc(func));
 	}
 
+	void getCaller(std::function<void(String)> func) const{
+		if(!_data) func(NULL_STRING);
+		else callRemoteFunction(NULL_STRING,"c",_data->callId).then(func,[func](const RpcError& err){
+			func(NULL_STRING);
+		});
+	}
+
 
 	template<typename T>
 	void resolve(T result) const{

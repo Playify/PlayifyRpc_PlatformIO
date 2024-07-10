@@ -35,6 +35,7 @@ using Callback=std::function<void(T t)>;
 #include "types/functions/FunctionCallContext.hpp"
 #include "internal/RegisteredTypes.hpp"
 #include "internal/CallFunction.hpp"
+#include "internal/helperFunctionsForUser.hpp"
 
 #include "types/RpcFunction.hpp"
 #include "types/RpcObject.hpp"
@@ -103,15 +104,31 @@ namespace Rpc{
 	}
 
 	//Types
+	String generateTypeName(){
+		static char possible[65]="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
+		char uuid[16];
+		esp_fill_random(uuid,sizeof(uuid));
+		for(uint8_t i=0;i<sizeof(uuid);i++)uuid[i]=possible[uuid[i]&63];
+		return "$"+Rpc::id+"$"+String(uuid,16);
+	}
+	
 	RegisteredType* registerType(const String& type){ return RegisteredTypes::registerType(type); }
 
 	void registerType(const String& type,RegisteredType* map){ RegisteredTypes::registerType(type,map); }
 	void registerType(const String& type,RegisteredType& map){ RegisteredTypes::registerType(type,&map); }
+	String registerType(RegisteredType& map){
+		String type=Rpc::generateTypeName();
+		RegisteredTypes::registerType(type,&map);
+		return type;
+	}
 
 	void unregisterType(const String& type){ RegisteredTypes::unregisterType(type); }
+	
 
 	template<typename T>
 	CallReceiver createCallReceiver(T t){return make_callReceiver(t);}//Helper for registering functions inside a type
+	template<typename T>
+	CallReceiver createSmartProperty(T t){return make_smartProperty(t);}//Helper for registering property accessors
 	template<typename T>
 	MessageFunc createMessageFunc(T t){return make_messageFunc(t);}//Helper for registering functions as message receiver
 

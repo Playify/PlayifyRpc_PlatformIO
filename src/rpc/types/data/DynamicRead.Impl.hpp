@@ -13,7 +13,7 @@ namespace DynamicData{
 		int32_t type=data.readLength();
 
 		if(type>=0)return false;
-		
+
 		switch((-type)%4){
 			case 0:
 				data=already[-type/4];
@@ -64,34 +64,38 @@ namespace DynamicData{
 		}
 	}
 
-	template<>
-	bool read(DataInput& data,int& argCount,std::vector<DataInput>&,int32_t& value){
-		if(argCount==0)return false;
-		switch(data.readLength()){
-			case 'i':
-				value=data.readInt();
-				argCount--;
-				return true;
-			case 'd':
-				value=int32_t(data.readDouble());
-				argCount--;
-				return true;
-			case 'l':
-				value=int32_t(data.readLong());
-				argCount--;
-				return true;
-			default:
-				return false;
-		}
-	}
-
-	template<>
-	bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,uint16_t& value){
-		int32_t i32;
-		if(!read(data,argCount,already,i32))return false;
-		value=i32;
-		return true;
-	}
+	#define READ_NUMBER(type)                                                          \
+    template<>                                                                         \
+    bool read(DataInput& data,int& argCount,std::vector<DataInput>&,type& value){      \
+        if(argCount==0)return false;                                                   \
+        switch(data.readLength()){                                                     \
+            case 'i':                                                                  \
+                value=type(data.readInt());                                            \
+                argCount--;                                                            \
+                return true;                                                           \
+            case 'd':                                                                  \
+                value=type(data.readDouble());                                         \
+                argCount--;                                                            \
+                return true;                                                           \
+            case 'l':                                                                  \
+                value=type(data.readLong());                                           \
+                argCount--;                                                            \
+                return true;                                                           \
+            default:                                                                   \
+                return false;                                                          \
+        }                                                                              \
+    }
+	READ_NUMBER(int8_t)
+	READ_NUMBER(uint8_t)
+	READ_NUMBER(int16_t)
+	READ_NUMBER(uint16_t)
+	READ_NUMBER(int32_t)
+	READ_NUMBER(uint32_t)
+	READ_NUMBER(uint64_t)
+	READ_NUMBER(int64_t)
+	READ_NUMBER(float)
+	READ_NUMBER(double)
+	#undef READ_NUMBER
 
 	template<>
 	bool read(DataInput& data,int& argCount,std::vector<DataInput>&,String& value){
