@@ -79,15 +79,12 @@ namespace RpcConnection{
 		reportedTypes.clear();
 		reportedName=NULL_STRING;
 
-		if(!call){
-			connected=true;
-			Serial.println("Connected to Server");
-		}else{
+		if(!call) connected=true;
+		else{
 			call.then([](){
 				connected=true;
-				Serial.println("Connected to Server (using second handshake)");
 			},[](const RpcError& e){
-				Serial.println("Error connecting to Server");
+				Serial.print("[Rpc] Error connecting to RPC: ");
 				e.printStackTrace();
 				_disconnect=true;
 			});

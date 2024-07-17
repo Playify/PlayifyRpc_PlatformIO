@@ -128,7 +128,7 @@ namespace Rpc{
 	template<typename T>
 	CallReceiver createCallReceiver(T t){return make_callReceiver(t);}//Helper for registering functions inside a type
 	template<typename T>
-	CallReceiver createSmartProperty(T t){return make_smartProperty(t);}//Helper for registering property accessors
+	CallReceiver createSmartProperty(T t,const std::function<void()>& onChange=nullptr){return make_smartProperty(t,onChange);}//Helper for registering property accessors
 	template<typename T>
 	MessageFunc createMessageFunc(T t){return make_messageFunc(t);}//Helper for registering functions as message receiver
 

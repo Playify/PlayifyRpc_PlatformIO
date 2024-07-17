@@ -98,3 +98,12 @@ struct RpcEvalError: public RpcError{
 			"",
 			"{\"$type\":\"$eval\"}"){}
 };
+
+struct RpcDataError: public RpcError{
+	explicit RpcDataError(const char* msg):RpcError(
+			"RpcEvalError",
+			NULL_STRING,
+			msg,
+			"",
+			"{\"$type\":\"$eval\"}"){}
+};

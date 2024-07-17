@@ -25,7 +25,7 @@ struct FunctionCallContext{
 		}
 		void doReceive(DataInput data) const{
 			if(listener==nullptr){
-				Serial.println("Discarding Message, as no listener was defined");
+				Serial.println("[Rpc] Error while receiving message: No listener is defined");
 				return;
 			}
 			listener(data);

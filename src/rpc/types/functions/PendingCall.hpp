@@ -7,7 +7,7 @@ MessageFunc make_messageFunc(T t){
 	auto func=make_function(t);
 	return [func](DataInput data){
 		if(!data.tryCall(func))
-			Serial.println("Discarding Message, unable to dynamically read for listener");
+			Serial.println("[Rpc] Error while receiving message: Arguments do not match the receiver");
 	};
 }
 
@@ -33,7 +33,7 @@ struct PendingCall{
 
 		void doReceive(DataInput data) const{
 			if(listener==nullptr){
-				Serial.println("Discarding Message, as no listener was defined");
+				Serial.println("[Rpc] Error while receiving message: No listener is defined");
 				return;
 			}
 			listener(data);

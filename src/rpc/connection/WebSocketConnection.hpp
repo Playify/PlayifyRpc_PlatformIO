@@ -75,20 +75,21 @@ namespace RpcConnection{
 			case WStype_DISCONNECTED:
 				connected=false;
 				doDisconnect();
-				if(!WiFi.isConnected())Serial.println("[WebSocket] Not yet connected to WiFi");
-				else Serial.println("[WebSocket] Disconnected!");
+				if(!WiFi.isConnected())Serial.println("[Rpc] Error connecting to RPC: Not yet connected to WiFi");
+				else Serial.println("[Rpc] Reconnecting to RPC");
 				
 				_reconnect=5000;
 				break;
 			case WStype_CONNECTED:{
-				Serial.print("[WebSocket] Connected to url: ");
-				Serial.println((char*)payload);
+				Serial.print("[Rpc] Connected to RPC (");
+				Serial.print((char*)payload);
+				Serial.println(")");
 				
 				doConnect();
 				break;
 			}
 			case WStype_TEXT:
-				Serial.print("[WebSocket] : ");
+				Serial.print("[Rpc] WebSocket message: ");
 				Serial.println((char*)payload);
 				break;
 			case WStype_BIN:{
