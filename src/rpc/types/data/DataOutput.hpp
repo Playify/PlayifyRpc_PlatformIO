@@ -2,8 +2,6 @@
 #include "Arduino.h"
 #include "vector"
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 class DataOutput : public std::vector<uint8_t>{
 public:
 	DataOutput(){
@@ -74,4 +72,3 @@ public:
 		writeString(error.jsonData);
 	}
 };
-#pragma clang diagnostic pop

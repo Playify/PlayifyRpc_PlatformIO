@@ -27,12 +27,12 @@ public:
 		auto deltaTime=millis()-_lastTime;
 		_lastTime+=deltaTime;
 		
-		if(!RpcConnection::connected)_timeout=0;
+		if(!RpcInternal::RpcConnection::connected)_timeout=0;
 		else if(!_call.state())_timeout=1000;
 		else if(_timeout>deltaTime)_timeout-=deltaTime;
 		else{
 			_timeout+=1000-deltaTime;
-			_call=callRemoteFunction(_type,_method);
+			_call=RpcInternal::callRemoteFunction(_type,_method);
 			_call.setMessageListener(_messageFunc);
 
 			auto onDisconnect=_onDisconnect;

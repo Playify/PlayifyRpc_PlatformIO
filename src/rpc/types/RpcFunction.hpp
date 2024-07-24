@@ -12,6 +12,6 @@ public:
 		
 	template<typename... Args>
 	PendingCall call(Args... args) const{
-		return callRemoteFunction(type,method,args...);
+		return RpcInternal::callRemoteFunction(type,method,args...);
 	}
 };

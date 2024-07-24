@@ -2,8 +2,6 @@
 #include <Arduino.h>
 #define NULL_STRING "\xc3\x28"
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 class DataInput{
 public:
 	uint8_t* _data;
@@ -122,4 +120,3 @@ public:
 	template<typename... Args>
 	bool tryGetArgs(Args&... args);
 };
-#pragma clang diagnostic pop

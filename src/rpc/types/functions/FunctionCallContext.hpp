@@ -74,10 +74,10 @@ struct FunctionCallContext{
 		if(_data->isFinished)return;
 
 		DataOutput data;
-		data.writeByte(RpcConnection::PacketType::MessageToExecutor);
+		data.writeByte(RpcInternal::RpcConnection::PacketType::MessageToExecutor);
 		data.writeLength(_data->callId);
-		DynamicData::writeDynamicArray(data,args...);
-		RpcConnection::send(data);
+		RpcInternal::DynamicData::writeDynamicArray(data,args...);
+		RpcInternal::RpcConnection::send(data);
 	}
 
 	void setMessageListener(MessageFunc func) const{
@@ -88,18 +88,18 @@ struct FunctionCallContext{
 	template<typename... Args>
 	void setMessageListener(std::function<void(Args...)> func) const{
 		if(!_data)return;
-		_data->setMessageListener(make_messageFunc(func));
+		_data->setMessageListener(RpcInternal::make_messageFunc(func));
 	}
 
 	template<typename Func>
 	void setMessageListener(Func func) const{
 		if(!_data)return;
-		_data->setMessageListener(make_messageFunc(func));
+		_data->setMessageListener(RpcInternal::make_messageFunc(func));
 	}
 
 	void getCaller(std::function<void(String)> func) const{
 		if(!_data) func(NULL_STRING);
-		else callRemoteFunction(NULL_STRING,"c",_data->callId).then(func,[func](const RpcError& err){
+		else RpcInternal::callRemoteFunction(NULL_STRING,"c",_data->callId).then(func,[func](const RpcError& err){
 			func(NULL_STRING);
 		});
 	}
@@ -112,10 +112,10 @@ struct FunctionCallContext{
 		_data->isFinished=true;
 
 		DataOutput data;
-		data.writeByte(RpcConnection::PacketType::FunctionSuccess);
+		data.writeByte(RpcInternal::RpcConnection::PacketType::FunctionSuccess);
 		data.writeLength(_data->callId);
-		DynamicData::writeDynamic(data,result);
-		RpcConnection::send(data);
+		RpcInternal::DynamicData::writeDynamic(data,result);
+		RpcInternal::RpcConnection::send(data);
 	}
 	void resolve() const{resolve(nullptr);}
 
@@ -125,13 +125,13 @@ struct FunctionCallContext{
 		_data->isFinished=true;
 
 		DataOutput data;
-		data.writeByte(RpcConnection::PacketType::FunctionError);
+		data.writeByte(RpcInternal::RpcConnection::PacketType::FunctionError);
 		data.writeLength(_data->callId);
 		data.writeError(error.append(
 				(_data->type==NULL_STRING?"<<null>>":_data->type)+"."+
 				(_data->method==NULL_STRING?"<<null>>":_data->method)+"(...)"
 				));
-		RpcConnection::send(data);
+		RpcInternal::RpcConnection::send(data);
 	}
 	void reject(const String& msg) const{ reject(RpcError(msg.c_str()));}
 	void reject(const char*& msg) const{ reject(RpcError(msg));}

@@ -1,3 +1,4 @@
+#pragma once
 #include <utility>
 
 #if ESP32
@@ -11,8 +12,10 @@
 
 struct PendingCall;
 
-template<typename... Args>
-PendingCall callRemoteFunction(String type,String method,Args... args);
+namespace RpcInternal{
+	template<typename... Args>
+	PendingCall callRemoteFunction(String type,String method,Args... args);
+}
 
 namespace Rpc{
 	extern String name;
@@ -24,7 +27,7 @@ template<typename T=void>
 using Callback=std::function<void(T t)>;
 
 #include "types/RpcError.hpp"
-#include "types/Errors/PredefinedErrors.hpp"
+#include "types/errors/PredefinedErrors.hpp"
 #include "types/data/DataInput.hpp"
 #include "types/data/DataOutput.hpp"
 #include "types/data/DynamicWrite.hpp"
@@ -56,22 +59,22 @@ namespace Rpc{
 
 	void setName(const String& n){
 		name=n;
-		if(RpcConnection::connected)
-			callRemoteFunction(NULL_STRING,"N",name);
+		if(RpcInternal::RpcConnection::connected)
+			RpcInternal::callRemoteFunction(NULL_STRING,"N",name);
 	}
 
 	//Connection
 	void setup(const String& rpcToken,const String& host,uint16_t port,const String& path="/rpc"){
 		id=String("esp@")+WiFi.getHostname()+"@"+WiFi.macAddress();
-		RpcConnection::setup(rpcToken,host,port,path);
-		RegisteredTypes::setup();
+		RpcInternal::RpcConnection::setup(rpcToken,host,port,path);
+		RpcInternal::RegisteredTypes::setup();
 	}
 
 	void loop(){
-		RpcConnection::loop();
+		RpcInternal::RpcConnection::loop();
 	}
 
-	bool isConnected(){ return RpcConnection::connected; }
+	bool isConnected(){ return RpcInternal::RpcConnection::connected; }
 
 
 	//Functions
@@ -80,57 +83,65 @@ namespace Rpc{
 	RpcFunction createFunction(String type,String method){ return RpcFunction(std::move(type),std::move(method)); }
 
 	RpcFunction registerFunction(CallReceiver func){
-		String method(RegisteredTypes::nextFunctionId++);
-		RegisteredTypes::registeredFunctions[method]=std::move(func);
+		String method(RpcInternal::RegisteredTypes::nextFunctionId++);
+		RpcInternal::RegisteredTypes::registeredFunctions[method]=std::move(func);
 		return RpcFunction("$"+id,method);
 	}
 	template<typename CallReceiver>
 	RpcFunction registerFunction(CallReceiver func){
-		String method(RegisteredTypes::nextFunctionId++);
-		RegisteredTypes::registeredFunctions[method]=CallReceiver(func);
+		String method(RpcInternal::RegisteredTypes::nextFunctionId++);
+		RpcInternal::RegisteredTypes::registeredFunctions[method]=CallReceiver(func);
 		return RpcFunction("$"+id,method);
 	}
 
 	void unregisterFunction(const RpcFunction& func){
 		if(func.type!=("$"+id))return;
-		RegisteredTypes::registeredFunctions.erase(func.method);
+		RpcInternal::RegisteredTypes::registeredFunctions.erase(func.method);
 	}
 
 	//callLocal not supported
 
 	template<typename... Args>
 	PendingCall callFunction(String type,String method,Args... args){
-		return callRemoteFunction(type,method,args...);
+		return RpcInternal::callRemoteFunction(type,method,args...);
 	}
 
 	//Types
 	String generateTypeName(){
 		static char possible[65]="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
-		char uuid[16];
-		esp_fill_random(uuid,sizeof(uuid));
+		char uuid[17];
+#ifdef ESP32
+		esp_fill_random(uuid,16);
+#else
+		uint32_t *uuid_int = (uint32_t *)uuid;
+		uuid_int[0] = RANDOM_REG32;
+		uuid_int[1] = RANDOM_REG32;
+		uuid_int[2] = RANDOM_REG32;
+		uuid_int[3] = RANDOM_REG32;
+#endif
 		for(uint8_t i=0;i<sizeof(uuid);i++)uuid[i]=possible[uuid[i]&63];
-		return "$"+Rpc::id+"$"+String(uuid,16);
+		return "$"+Rpc::id+"$"+String(uuid);
 	}
 	
-	RegisteredType* registerType(const String& type){ return RegisteredTypes::registerType(type); }
+	RegisteredType* registerType(const String& type){ return RpcInternal::RegisteredTypes::registerType(type); }
 
-	void registerType(const String& type,RegisteredType* map){ RegisteredTypes::registerType(type,map); }
-	void registerType(const String& type,RegisteredType& map){ RegisteredTypes::registerType(type,&map); }
+	void registerType(const String& type,RegisteredType* map){ RpcInternal::RegisteredTypes::registerType(type,map); }
+	void registerType(const String& type,RegisteredType& map){ RpcInternal::RegisteredTypes::registerType(type,&map); }
 	String registerType(RegisteredType& map){
 		String type=Rpc::generateTypeName();
-		RegisteredTypes::registerType(type,&map);
+		RpcInternal::RegisteredTypes::registerType(type,&map);
 		return type;
 	}
 
-	void unregisterType(const String& type){ RegisteredTypes::unregisterType(type); }
+	void unregisterType(const String& type){ RpcInternal::RegisteredTypes::unregisterType(type); }
 	
 
 	template<typename T>
-	CallReceiver createCallReceiver(T t){return make_callReceiver(t);}//Helper for registering functions inside a type
+	CallReceiver createCallReceiver(T t){return RpcInternal::make_callReceiver(t);}//Helper for registering functions inside a type
 	template<typename T>
-	CallReceiver createSmartProperty(T t,const std::function<void()>& onChange=nullptr){return make_smartProperty(t,onChange);}//Helper for registering property accessors
+	CallReceiver createSmartProperty(T t,const std::function<void()>& onChange=nullptr){return RpcInternal::make_smartProperty(t,onChange);}//Helper for registering property accessors
 	template<typename T>
-	MessageFunc createMessageFunc(T t){return make_messageFunc(t);}//Helper for registering functions as message receiver
+	MessageFunc createMessageFunc(T t){return RpcInternal::make_messageFunc(t);}//Helper for registering functions as message receiver
 
 
 	void checkTypes(const std::vector<String>& types,const Callback<int32_t>& callback){

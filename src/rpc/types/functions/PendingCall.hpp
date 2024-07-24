@@ -2,13 +2,15 @@
 
 using MessageFunc=std::function<void(DataInput rawData)>;
 
-template<typename T>
-MessageFunc make_messageFunc(T t){
-	auto func=make_function(t);
-	return [func](DataInput data){
-		if(!data.tryCall(func))
-			Serial.println("[Rpc] Error while receiving message: Arguments do not match the receiver");
-	};
+namespace RpcInternal{
+	template<typename T>
+	MessageFunc make_messageFunc(T t){
+		auto func=make_function(t);
+		return [func](DataInput data){
+			if(!data.tryCall(func))
+				Serial.println("[Rpc] Error while receiving message: Arguments do not match the receiver");
+		};
+	}
 }
 
 
@@ -85,9 +87,9 @@ struct PendingCall{
 		_data->isCancelled=true;
 		if(!_data->state){
 			DataOutput data;
-			data.writeByte(RpcConnection::PacketType::FunctionCancel);
+			data.writeByte(RpcInternal::RpcConnection::PacketType::FunctionCancel);
 			data.writeLength(_data->callId);
-			RpcConnection::send(data);
+			RpcInternal::RpcConnection::send(data);
 		}
 	}
 
@@ -98,10 +100,10 @@ struct PendingCall{
 		if(_data->state)return;
 
 		DataOutput data;
-		data.writeByte(RpcConnection::PacketType::MessageToExecutor);
+		data.writeByte(RpcInternal::RpcConnection::PacketType::MessageToExecutor);
 		data.writeLength(_data->callId);
-		DynamicData::writeDynamicArray(data,args...);
-		RpcConnection::send(data);
+		RpcInternal::DynamicData::writeDynamicArray(data,args...);
+		RpcInternal::RpcConnection::send(data);
 	}
 
 	void setMessageListener(MessageFunc func) const{
@@ -112,13 +114,13 @@ struct PendingCall{
 	template<typename... Args>
 	void setMessageListener(std::function<void(Args...)> func) const{
 		if(!_data)return;
-		_data->setMessageListener(make_messageFunc(func));
+		_data->setMessageListener(RpcInternal::make_messageFunc(func));
 	}
 
 	template<typename Func>
 	void setMessageListener(Func func) const{
 		if(!_data)return;
-		_data->setMessageListener(make_messageFunc(func));
+		_data->setMessageListener(RpcInternal::make_messageFunc(func));
 	}
 
 
@@ -199,7 +201,7 @@ private:
 		return then(std::function<void(DataInput result)>([onSuccess,sharedData](DataInput data){
 			
 			if(!data.tryCallSingle(onSuccess)&&sharedData&&sharedData->onError!=nullptr)
-				sharedData->onError(RpcError("Error casting result"));
+				sharedData->onError(RpcDataError("Error casting result"));
 		}),onError);
 	}
 
@@ -215,7 +217,7 @@ private:
 		auto sharedData=_data;
 		return then(std::function<void(DataInput result)>([onSuccess,sharedData](DataInput data){
 			if(!data.tryCallSingle(onSuccess)&&sharedData&&sharedData->onError!=nullptr)
-				sharedData->onError(RpcError("Error casting result"));
+				sharedData->onError(RpcDataError("Error casting result"));
 		}));
 	}
 
@@ -233,7 +235,7 @@ public:
 
 	template<typename SuccessFunc>
 	const PendingCall& then(const SuccessFunc& onSuccess) const{
-		return _then(removeConstReferenceParameters(make_function(onSuccess)));
+		return _then(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function(onSuccess)));
 	}
 
 	template<typename T>
@@ -249,7 +251,7 @@ public:
 
 	template<typename SuccessFunc>
 	const PendingCall& then(const SuccessFunc& onSuccess,const std::function<void(RpcError error)>& onError) const{
-		return _then(removeConstReferenceParameters(make_function(onSuccess)),onError);
+		return _then(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function(onSuccess)),onError);
 	}
 
 

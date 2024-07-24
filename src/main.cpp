@@ -65,13 +65,12 @@ void test(){
 	
 	std::vector<String> null;
 	DataInput data;
-	DynamicData::readDynamic(data,null);
+	RpcInternal::DynamicData::readDynamic(data,null);
 	data.tryCallSingle([](std::vector<nullptr_t> n){
 
 	});
 
 	data.tryCall(func);
-
 
 	Rpc::callFunction("EspTest","func").then([](String z){
 	});
