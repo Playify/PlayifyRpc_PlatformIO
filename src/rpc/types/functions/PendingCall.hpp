@@ -166,7 +166,7 @@ struct PendingCall{
 	}
 
 	const PendingCall& then(const std::function<void(DataInput result)>& onSuccess,
-							const std::function<void(RpcError error)>& onError) const{
+	const std::function<void(RpcError error)>& onError) const{
 		if(!_data){
 			if(onError!=nullptr)
 				onError(RpcError("PendingCall not initialized"));
@@ -199,7 +199,7 @@ private:
 	_then(const std::function<void(T result)>& onSuccess,const std::function<void(RpcError error)>& onError) const{
 		auto sharedData=_data;
 		return then(std::function<void(DataInput result)>([onSuccess,sharedData](DataInput data){
-			
+
 			if(!data.tryCallSingle(onSuccess)&&sharedData&&sharedData->onError!=nullptr)
 				sharedData->onError(RpcDataError("Error casting result"));
 		}),onError);
@@ -208,8 +208,8 @@ private:
 	const PendingCall&
 	_then(const std::function<void()>& onSuccess,const std::function<void(RpcError error)>& onError) const{
 		return then(
-				{[onSuccess](DataInput data){ onSuccess(); }},
-				onError);
+			{[onSuccess](DataInput data){ onSuccess(); }},
+			onError);
 	}
 
 	template<typename T>
@@ -240,7 +240,7 @@ public:
 
 	template<typename T>
 	const PendingCall& then(const std::function<void(T result)>& onSuccess,
-							const std::function<void(RpcError error)>& onError) const{
+		const std::function<void(RpcError error)>& onError) const{
 		return _then(onSuccess,onError);
 	}
 

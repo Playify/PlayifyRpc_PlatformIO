@@ -9,6 +9,7 @@ namespace RpcInternal{
 		template<typename... T>
 		bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,std::vector<T...>& value);
 
+		
 		template<typename T>
 		bool readDynamic(DataInput& data,T& value){
 			DataInput backup=data;

@@ -32,4 +32,11 @@ namespace RpcInternal{
 
 		return PendingCall(shared);
 	}
+	
+	
+	void getMethodSignatures(const FunctionCallContext& fcc,const RegisteredType invoker,const String type,String method,bool ts){
+		const auto& methodIterator=invoker.find(method);
+		if(methodIterator!=invoker.end()) methodIterator->second.getMethodSignatures(fcc,ts);
+		else fcc.reject(RpcMethodNotFoundError(type,method));
+	}
 }

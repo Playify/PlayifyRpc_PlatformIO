@@ -1,7 +1,7 @@
 
 class RpcObject{
 public:
-	const String type;
+	String type;
 	explicit RpcObject(String type):type(std::move(type)){}
 
 	RpcFunction getFunction(String method) const{

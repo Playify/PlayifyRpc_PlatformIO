@@ -16,8 +16,8 @@ namespace RpcInternal{
 		template<typename T>
 		void writeDynamic(DataOutput& data,T value);
 
-		template<typename T>
-		void writeDynamic(DataOutput& data,std::vector<T> value);
+		template<typename... T>
+		void writeDynamic(DataOutput& data,std::vector<T...> value);
 
 
 		namespace WriteAll{

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/PlayifyRpc.iml" filepath="$PROJECT_DIR$/.idea/PlayifyRpc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/PlayifyRpc_PlatformIO.iml" filepath="$PROJECT_DIR$/.idea/PlayifyRpc_PlatformIO.iml" />
     </modules>
   </component>
 </project>

@@ -1,6 +1,26 @@
 #include <map>
 
-using CallReceiver=std::function<void(FunctionCallContext ctx,DataInput args)>;
+//using CallReceiver=std::function<void(FunctionCallContext ctx,DataInput args)>;//TODO convert to struct holding executor and getSignature
+
+struct CallReceiver{
+	std::function<void(FunctionCallContext ctx,DataInput args)> call;
+	std::function<void(FunctionCallContext ctx,bool ts)> getMethodSignatures;
+	
+	CallReceiver(nullptr_t):CallReceiver(){}
+	CallReceiver(){
+		call=nullptr;
+		getMethodSignatures=nullptr;
+	}
+	
+	/*
+	CallReceiver(const std::function<void(FunctionCallContext,DataInput)>& x):function(x){}
+	CallReceiver(std::function<void(FunctionCallContext,DataInput)>&& x):function(x){}*/
+	
+	template<typename T>
+	CallReceiver(T func){
+		//TODO make "make_function" available and such
+	}
+};
 
 
 namespace RpcInternal{

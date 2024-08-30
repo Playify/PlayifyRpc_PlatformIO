@@ -101,8 +101,7 @@ namespace RpcInternal{
 			for(const auto& item:currentlyExecuting)item.second->cancelSelf();
 		}
 
-		void
-		callMeta(const FunctionCallContext& fcc,const RegisteredType& invoker,DataInput input,const String& string);
+		void callMeta(const FunctionCallContext& fcc,const RegisteredType& invoker,DataInput input,const String& string);
 
 		void receiveRpc(DataInput data){
 			auto packetType=PacketType(data.readByte());
@@ -131,7 +130,7 @@ namespace RpcInternal{
 
 					const auto& methodIterator=map.find(method);
 					if(methodIterator!=map.end())
-						methodIterator->second(fcc,data);
+						methodIterator->second.call(fcc,data);
 					else
 						fcc.reject(RpcMethodNotFoundError(type,method));
 
@@ -179,12 +178,24 @@ namespace RpcInternal{
 
 		void callMeta(const FunctionCallContext& fcc,const RegisteredType& invoker,DataInput input,const String& type){
 			String meta;
+			String method;
+			bool ts;
 			if(input.tryGetArgs(meta)){
 				if(meta=="M"){
 					std::vector<String> methods(invoker.size());
 					size_t i=0;
 					for(const auto& pair:invoker) methods[i++]=pair.first;
 					fcc.resolve(methods);
+					return;
+				}
+			}else if(input.tryGetArgs(meta,method,ts)){
+				if(meta=="S"){
+					getMethodSignatures(fcc,invoker,type,method,ts);
+					return;
+				}
+			}else if(input.tryGetArgs(meta,method)){
+				if(meta=="S"){
+					getMethodSignatures(fcc,invoker,type,method,false);
 					return;
 				}
 			}else meta=NULL_STRING;

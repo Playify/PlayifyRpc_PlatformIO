@@ -1,8 +1,11 @@
 #pragma once
+
 #include <utility>
 
 #if ESP32
+
 #include "WiFi.h"
+
 #elif ESP8266
 #include "ESP8266WiFi.h"
 #endif
@@ -19,7 +22,9 @@ namespace RpcInternal{
 
 namespace Rpc{
 	extern String name;
+
 	extern String prettyName();
+
 	extern String id;
 }
 
@@ -32,6 +37,7 @@ using Callback=std::function<void(T t)>;
 #include "types/data/DataOutput.hpp"
 #include "types/data/DynamicWrite.hpp"
 #include "types/data/DynamicRead.hpp"
+#include "types/data/DynamicTypeStringifier.hpp"
 #include "connection/WebSocketConnection.hpp"
 
 #include "types/functions/PendingCall.hpp"
@@ -47,14 +53,15 @@ using Callback=std::function<void(T t)>;
 
 #include "utils/RpcListener.hpp"
 
-#include "types/data/DynamicWrite.Impl.hpp"
-#include "types/data/DynamicRead.Impl.hpp"
+#include "types/data/DynamicData.Impl.hpp"
 
 
 namespace Rpc{
 	//Rpc
 	String id;
+
 	String prettyName(){return name!=NULL_STRING?name+" ("+id+")":id;}
+
 	String name=NULL_STRING;
 
 	void setName(const String& n){
@@ -74,19 +81,20 @@ namespace Rpc{
 		RpcInternal::RpcConnection::loop();
 	}
 
-	bool isConnected(){ return RpcInternal::RpcConnection::connected; }
+	bool isConnected(){return RpcInternal::RpcConnection::connected;}
 
 
 	//Functions
-	RpcObject createObject(String type){ return RpcObject(std::move(type)); }
+	RpcObject createObject(String type){return RpcObject(std::move(type));}
 
-	RpcFunction createFunction(String type,String method){ return RpcFunction(std::move(type),std::move(method)); }
+	RpcFunction createFunction(String type,String method){return RpcFunction(std::move(type),std::move(method));}
 
 	RpcFunction registerFunction(CallReceiver func){
 		String method(RpcInternal::RegisteredTypes::nextFunctionId++);
 		RpcInternal::RegisteredTypes::registeredFunctions[method]=std::move(func);
 		return RpcFunction("$"+id,method);
 	}
+
 	template<typename CallReceiver>
 	RpcFunction registerFunction(CallReceiver func){
 		String method(RpcInternal::RegisteredTypes::nextFunctionId++);
@@ -122,19 +130,21 @@ namespace Rpc{
 		for(uint8_t i=0;i<sizeof(uuid);i++)uuid[i]=possible[uuid[i]&63];
 		return "$"+Rpc::id+"$"+String(uuid);
 	}
-	
-	RegisteredType* registerType(const String& type){ return RpcInternal::RegisteredTypes::registerType(type); }
 
-	void registerType(const String& type,RegisteredType* map){ RpcInternal::RegisteredTypes::registerType(type,map); }
-	void registerType(const String& type,RegisteredType& map){ RpcInternal::RegisteredTypes::registerType(type,&map); }
+	RegisteredType* registerType(const String& type){return RpcInternal::RegisteredTypes::registerType(type);}
+
+	void registerType(const String& type,RegisteredType* map){RpcInternal::RegisteredTypes::registerType(type,map);}
+
+	void registerType(const String& type,RegisteredType& map){RpcInternal::RegisteredTypes::registerType(type,&map);}
+
 	String registerType(RegisteredType& map){
 		String type=Rpc::generateTypeName();
 		RpcInternal::RegisteredTypes::registerType(type,&map);
 		return type;
 	}
 
-	void unregisterType(const String& type){ RpcInternal::RegisteredTypes::unregisterType(type); }
-	
+	void unregisterType(const String& type){RpcInternal::RegisteredTypes::unregisterType(type);}
+
 
 	template<typename T>
 	CallReceiver createCallReceiver(T t){return RpcInternal::make_callReceiver(t);}//Helper for registering functions inside a type
@@ -146,12 +156,12 @@ namespace Rpc{
 
 	void checkTypes(const std::vector<String>& types,const Callback<int32_t>& callback){
 		callFunction(NULL_STRING,"?",MultipleArguments<String>(types))
-				.then([callback](DataInput data){
-					if(data.readLength()=='i') callback(data.readInt());
-					else callback(-1);
-				},[callback](const RpcError&){
-					callback(-1);
-				});
+			.then([callback](DataInput data){
+				if(data.readLength()=='i') callback(data.readInt());
+				else callback(-1);
+			},[callback](const RpcError&){
+				callback(-1);
+			});
 	}
 
 	void checkType(const String& type,const Callback<bool>& callback){
@@ -171,20 +181,23 @@ namespace Rpc{
 			callback(std::vector<String>());
 		});
 	}
+
 	void getRegistrations(const Callback<std::vector<String>>& callback){
 		callFunction("Rpc","getRegistrations").then(callback,[callback](const RpcError&){
 			callback(std::vector<String>());
 		});
 	}
+
 	void evalString(String expression,const Callback<String>& callback){
 		callFunction("Rpc","evalString",expression).then(callback,[callback](const RpcError& e){
 			callback(e.getStackTrace());
 		});
 	}
+
 	template<typename T>
 	void evalObject(String expression,const Callback<T>& callback,const Callback<RpcError> onError){
 		callFunction("Rpc","evalObject",expression).then(callback,onError);
 	}
-	
+
 	//Rpc.listenCalls() is not supported in C++
 }

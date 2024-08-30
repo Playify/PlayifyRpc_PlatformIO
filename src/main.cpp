@@ -76,6 +76,21 @@ void test(){
 	});
 	Rpc::callFunction("EspTest","func").then([](){
 	});
+	
+	
+
+	RpcInternal::DynamicData::getMethodSignature(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function([](const FunctionCallContext& ctx,MultipleArguments<bool> multi){
+
+	})),true);
+	RpcInternal::DynamicData::getMethodSignature(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function([](const FunctionCallContext& ctx,std::vector<bool> multi){
+
+	})),true);/*
+	RpcInternal::DynamicData::getMethodSignature(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function([](const FunctionCallContext& ctx,std::exception multi){
+
+	})),true);*/
+	RpcInternal::DynamicData::getMethodSignature(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function([](const FunctionCallContext& ctx,int multi){
+
+	})),true);
 }
 
 
