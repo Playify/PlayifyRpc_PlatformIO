@@ -24,5 +24,10 @@
 		"rpc.hpp",
 		"TimeHandler.hpp",
 		"WebDebugger.hpp"
-	]
+	],
+	"build": {
+		"flags":[
+			"-D LIB_VERSION=\\\"${VERSION}\\\""
+		]
+	}
 }

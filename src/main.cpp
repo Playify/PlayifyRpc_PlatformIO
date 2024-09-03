@@ -29,19 +29,19 @@ void setup() {
 
 	auto type=Rpc::registerType("EspTest");
 
-	(*type)["params"]=Rpc::createCallReceiver([](const FunctionCallContext& ctx,const MultipleArguments<String>& args){
+	(*type)["params"].add([](const FunctionCallContext& ctx,const MultipleArguments<String>& args){
 		String result;
 		for(const auto& s: args)result+=s;
 
 		ctx.resolve(result);
 	});
-	(*type)["arr"]=Rpc::createCallReceiver([](const FunctionCallContext& ctx,const std::vector<String>& args){
+	(*type)["arr"].add([](const FunctionCallContext& ctx,const std::vector<String>& args){
 		String result;
 		for(const auto& s: args)result+=s;
 
 		ctx.resolve(result);
 	});
-	(*type)["call"]=Rpc::createCallReceiver([](const FunctionCallContext& ctx,RpcFunction func){
+	(*type)["call"].add([](const FunctionCallContext& ctx,RpcFunction func){
 		
 		func.call().then([ctx](DataInput data){
 			Serial.println("Forwarding success");
@@ -52,11 +52,17 @@ void setup() {
 			ctx.reject(e);
 		});
 	});
+
+	int x;
+	(*type)["test"].add([](const FunctionCallContext& ctx){
+		
+	},(int*)nullptr);
+	(*type)["test"].smartProperty(x);
 }
 
 void test(){
 	RegisteredType  type;
-	type["func2"]=Rpc::createCallReceiver([](FunctionCallContext ctx,const MultipleArguments<String>& args){
+	type["func2"].add([](FunctionCallContext ctx,const MultipleArguments<String>& args){
 		String result;
 		for(const auto& s: args)result+=s;
 

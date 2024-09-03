@@ -36,7 +36,13 @@ namespace RpcInternal{
 	
 	void getMethodSignatures(const FunctionCallContext& fcc,const RegisteredType invoker,const String type,String method,bool ts){
 		const auto& methodIterator=invoker.find(method);
-		if(methodIterator!=invoker.end()) methodIterator->second.getMethodSignatures(fcc,ts);
-		else fcc.reject(RpcMethodNotFoundError(type,method));
+		if(methodIterator==invoker.end()){
+			fcc.reject(RpcMethodNotFoundError(type,method));
+			return;
+		}
+		std::vector<MethodSignatureTuple> signatures;
+		for(auto& signature:methodIterator->second.signatures)
+			signatures.push_back(signature(ts));
+		fcc.resolve(signatures);
 	}
 }

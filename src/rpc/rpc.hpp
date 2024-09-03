@@ -12,6 +12,7 @@
 
 #include "vector"
 #include "internal/make_function.hpp"
+#include "internal/CallReceiver.hpp"
 
 struct PendingCall;
 
@@ -44,7 +45,6 @@ using Callback=std::function<void(T t)>;
 #include "types/functions/FunctionCallContext.hpp"
 #include "internal/RegisteredTypes.hpp"
 #include "internal/CallFunction.hpp"
-#include "internal/helperFunctionsForUser.hpp"
 
 #include "types/RpcFunction.hpp"
 #include "types/RpcObject.hpp"
@@ -54,7 +54,9 @@ using Callback=std::function<void(T t)>;
 #include "utils/RpcListener.hpp"
 
 #include "types/data/DynamicData.Impl.hpp"
+#include "internal/CallReceiver.Impl.hpp"
 
+//TODO make current version available
 
 namespace Rpc{
 	//Rpc
@@ -144,24 +146,17 @@ namespace Rpc{
 	}
 
 	void unregisterType(const String& type){RpcInternal::RegisteredTypes::unregisterType(type);}
-
-
-	template<typename T>
-	CallReceiver createCallReceiver(T t){return RpcInternal::make_callReceiver(t);}//Helper for registering functions inside a type
-	template<typename T>
-	CallReceiver createSmartProperty(T t,const std::function<void()>& onChange=nullptr){return RpcInternal::make_smartProperty(t,onChange);}//Helper for registering property accessors
+	
+	
 	template<typename T>
 	MessageFunc createMessageFunc(T t){return RpcInternal::make_messageFunc(t);}//Helper for registering functions as message receiver
 
 
 	void checkTypes(const std::vector<String>& types,const Callback<int32_t>& callback){
 		callFunction(NULL_STRING,"?",MultipleArguments<String>(types))
-			.then([callback](DataInput data){
-				if(data.readLength()=='i') callback(data.readInt());
-				else callback(-1);
-			},[callback](const RpcError&){
-				callback(-1);
-			});
+				.then(callback,[callback](const RpcError&){
+					callback(-1);
+				});
 	}
 
 	void checkType(const String& type,const Callback<bool>& callback){

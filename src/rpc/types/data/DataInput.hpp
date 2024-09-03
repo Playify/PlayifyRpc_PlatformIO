@@ -111,12 +111,10 @@ public:
 
 	template<typename Func>
 	bool tryCall(Func func);
-	template<typename Func,typename Arg0>
-	bool tryCall(Func func,const Arg0& arg0);
 	template<typename Func>
 	bool tryCallSingle(Func func);
 	template<typename T>
-	bool tryGetResult(T value);
+	bool tryGetResult(T& value);
 	template<typename... Args>
 	bool tryGetArgs(Args&... args);
 };

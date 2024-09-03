@@ -129,10 +129,15 @@ namespace RpcInternal{
 					}
 
 					const auto& methodIterator=map.find(method);
-					if(methodIterator!=map.end())
-						methodIterator->second.call(fcc,data);
-					else
+					if(methodIterator==map.end()){
 						fcc.reject(RpcMethodNotFoundError(type,method));
+						return;
+					}
+					auto& callers=methodIterator->second.callers;
+					for(auto& caller:callers)
+						if(caller(fcc,data))
+							return;
+					fcc.reject("Error casting arguments");
 
 					break;
 				}

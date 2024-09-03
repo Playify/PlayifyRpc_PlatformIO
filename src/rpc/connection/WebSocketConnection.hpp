@@ -85,22 +85,20 @@ namespace RpcInternal{
 
 					_reconnect=5000;
 					break;
-				case WStype_CONNECTED:{
+				case WStype_CONNECTED:
 					Serial.print("[Rpc] Connected to RPC (");
 					Serial.print((char*)payload);
 					Serial.println(")");
 
 					doConnect();
 					break;
-				}
 				case WStype_TEXT:
 					Serial.print("[Rpc] WebSocket message: ");
 					Serial.println((char*)payload);
 					break;
-				case WStype_BIN:{
+				case WStype_BIN:
 					receiveRpc(DataInput(payload,length));
 					break;
-				}
 				//continuation frames are not yet handled correctly
 				default:
 					break;

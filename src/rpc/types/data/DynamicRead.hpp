@@ -133,13 +133,7 @@ namespace RpcInternal{
 template<typename Func>
 bool DataInput::tryCall(Func func){
 	return RpcInternal::DynamicData::callDynamicArray(*this,RpcInternal::removeConstReferenceParameters(
-			RpcInternal::make_function(func)));
-}
-
-template<typename Func,typename Arg0>
-bool DataInput::tryCall(Func func,const Arg0& arg0){
-	return RpcInternal::DynamicData::callDynamicArray(*this,RpcInternal::removeConstReferenceParameters(
-			RpcInternal::make_function(func)),arg0);
+															  RpcInternal::make_function(func)));
 }
 
 template<typename Func>
@@ -149,7 +143,7 @@ bool DataInput::tryCallSingle(Func func){
 }
 
 template<typename T>
-bool DataInput::tryGetResult(T value){
+bool DataInput::tryGetResult(T& value){
 	return RpcInternal::DynamicData::readDynamic(*this,value);
 }
 
