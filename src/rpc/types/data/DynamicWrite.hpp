@@ -16,8 +16,10 @@ namespace RpcInternal{
 		template<typename T>
 		void writeDynamic(DataOutput& data,T value);
 
-		template<typename... T>
-		void writeDynamic(DataOutput& data,std::vector<T...> value);
+		template<typename T>
+		void writeDynamic(DataOutput& data,std::vector<T> value);
+		template<typename... Types>
+		void writeDynamic(DataOutput& data,std::tuple<Types...> value);
 
 
 		namespace WriteAll{
@@ -38,16 +40,10 @@ namespace RpcInternal{
 		}
 		namespace Count{
 			size_t argCount(){ return 0; }
-
 			template<typename T,typename... Args>
-			size_t argCount(T,Args... rest){
-				return 1+argCount(rest...);
-			}
-
+			size_t argCount(T,Args... rest){return 1+argCount(rest...);}
 			template<typename T,typename... Args>
-			size_t argCount(MultipleArguments <T> multi,Args... rest){
-				return multi.size()+argCount(rest...);
-			}
+			size_t argCount(MultipleArguments <T> multi,Args... rest){return multi.size()+argCount(rest...);}
 		}
 
 		template<typename... Args>

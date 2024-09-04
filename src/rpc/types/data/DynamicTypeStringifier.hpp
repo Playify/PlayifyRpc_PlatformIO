@@ -2,24 +2,31 @@ namespace RpcInternal{
 	namespace DynamicData{
 		template<typename T>
 		String getTypeName(bool ts,T* dummy=nullptr);
-		template<typename... T>
-		String getTypeName(bool ts,std::vector<T...>* dummy=nullptr);
-		template<typename... T>
-		String getTypeName(bool ts,MultipleArguments<T...>* dummy=nullptr);
+		template<typename T>
+		String getTypeName(bool ts,std::vector<T>* dummy=nullptr);
+		template<typename T>
+		String getTypeName(bool ts,MultipleArguments<T>* dummy=nullptr);
 
 
 		template<typename Ignored>
+		void getTypeNames(std::vector<String>&,bool){}
+		template<typename Ignored,typename Curr,typename... NextTypes>
+		void getTypeNames(std::vector<String>& vec,bool ts){
+			vec.push_back(getTypeName(ts,(Curr*)nullptr));
+			getTypeNames<Ignored,NextTypes...>(vec,ts);
+		}
+		template<typename Ignored>
 		void getTypeNames(std::vector<String>&,bool,String*,int,int){}
-		template<typename Ignored,typename Curr>
+		template<typename Ignored,typename Curr,typename... NextTypes>
 		void getTypeNames(std::vector<String>& vec,bool ts,String* data,int size,int index){
-			const String& typeName=getTypeName(ts,(Curr*)nullptr);
+			const String& typeName=getTypeName<Curr>(ts,(Curr*)nullptr);
 
 			String name=index<size?data[index]:"arg"+String(index);
 			if(!ts)vec.push_back(typeName+" "+name);
 			else if(typeName.startsWith("..."))vec.push_back(name+":"+typeName.substring(3));
 			else vec.push_back(name+":"+typeName);
 			
-			getTypeNames<Ignored>(vec,ts,data,size,index+1);
+			getTypeNames<Ignored,NextTypes...>(vec,ts,data,size,index+1);
 		}
 		
 		template<int T>

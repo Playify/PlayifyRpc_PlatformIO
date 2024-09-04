@@ -6,8 +6,10 @@ namespace RpcInternal{
 		template<typename T>
 		bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,T& value);
 
-		template<typename... T>
-		bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,std::vector<T...>& value);
+		template<typename T>
+		bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,std::vector<T>& value);
+		template<typename... Types>
+		bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,std::tuple<Types...>& value);
 
 		
 		template<typename T>

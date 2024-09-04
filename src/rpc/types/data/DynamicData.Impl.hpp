@@ -144,6 +144,14 @@ namespace RpcInternal{
 			data.writeLength(-(len*4+1));
 			data.write((uint8_t*)value,len);
 		}
+		template<>
+		String getTypeName(bool ts,String*){
+			return "string";
+		}
+		template<>
+		String getTypeName(bool ts,const char**){
+			return "string";
+		}
 		
 		
 		//Missing: Date, Regex, Object
@@ -274,8 +282,8 @@ namespace RpcInternal{
 
 
 		//Vector
-		template<typename... T>
-		bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,std::vector<T...>& value){
+		template<typename T>
+		bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,std::vector<T>& value){
 			if(argCount==0)return false;
 			auto tmp=data;
 			int32_t type=data.readLength();
@@ -305,16 +313,16 @@ namespace RpcInternal{
 			}
 		}
 
-		template<typename... T>
-		void writeDynamic(DataOutput& data,std::vector<T...> value){
+		template<typename T>
+		void writeDynamic(DataOutput& data,std::vector<T> value){
 			data.writeLength(-(value.size()*4+3));
 			for(const auto& item: value)
 				writeDynamic(data,item);
 		}
 
-		template<typename First,typename... T>
-		String getTypeName(bool ts,std::vector<First,T...>*){
-			return getTypeName<First>(ts)+"[]";
+		template<typename First>
+		String getTypeName(bool ts,std::vector<First>*){
+			return getTypeName(ts,(First*)nullptr)+"[]";
 		}
 		
 		
@@ -350,12 +358,29 @@ namespace RpcInternal{
 					return false;
 			}
 		}
+		
+		namespace Tuples{
+
+// Base case: Stop the recursion when Index equals the tuple size
+			template<std::size_t Index = 0, typename... Types>
+			auto
+			writeDynamicTuple(DataOutput& data, const std::tuple<Types...>& value) ->typename std::enable_if<Index == sizeof...(Types), void>::type{
+				// Base case does nothing
+			}
+// Recursive case: Write each tuple element
+			template<std::size_t Index = 0, typename... Types>
+			auto
+			writeDynamicTuple(DataOutput& data, const std::tuple<Types...>& value) ->typename std::enable_if<Index < sizeof...(Types), void>::type{
+				writeDynamic(data, std::get<Index>(value));
+				writeDynamicTuple<Index + 1>(data, value);
+			}
+
+		}
 
 		template<typename... Types>
 		void writeDynamic(DataOutput& data,std::tuple<Types...> value){
 			data.writeLength(-(std::tuple_size<std::tuple<Types...>>::value*4+3));
-			for(const auto& item: value)
-				writeDynamic(data,item);
+			Tuples::writeDynamicTuple(data,value);
 		}
 
 		template<typename... Types>
@@ -385,7 +410,7 @@ namespace RpcInternal{
 
 		template<typename T>
 		String getTypeName(bool ts,MultipleArguments<T>*){
-			auto sub=getTypeName<T>(ts);
+			auto sub=getTypeName<T>(ts,(T*)nullptr);
 			return (ts?"...":"params ")+sub+"[]";
 		}
 	}

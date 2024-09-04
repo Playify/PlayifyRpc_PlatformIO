@@ -23,10 +23,10 @@ namespace RpcInternal{
 
 namespace Rpc{
 	extern String name;
-
 	extern String prettyName();
-
 	extern String id;
+
+	String getVersion();
 }
 
 template<typename T=void>
@@ -84,7 +84,6 @@ namespace Rpc{
 	}
 
 	bool isConnected(){return RpcInternal::RpcConnection::connected;}
-
 
 	//Functions
 	RpcObject createObject(String type){return RpcObject(std::move(type));}
