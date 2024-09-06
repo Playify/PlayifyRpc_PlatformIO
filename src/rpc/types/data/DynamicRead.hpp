@@ -4,20 +4,10 @@ struct FunctionCallContext;
 namespace RpcInternal{
 	namespace DynamicData{
 		template<typename T>
-		bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,T& value);
-
-		template<typename T>
-		bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,std::vector<T>& value);
-		template<typename... Types>
-		bool read(DataInput& data,int& argCount,std::vector<DataInput>& already,std::tuple<Types...>& value);
-
-		
-		template<typename T>
 		bool readDynamic(DataInput& data,T& value){
 			DataInput backup=data;
 			int args=1;
-			auto already=std::vector<DataInput>();
-			if(read(data,args,already,value)&&(args&-1)==0)
+			if(TypeDefinition<T>::read(data,args,value)&&(args&-1)==0)
 				return true;
 			data=backup;
 			return false;
@@ -60,22 +50,22 @@ namespace RpcInternal{
 		}
 
 		namespace ReadAll{
-			bool readAll(DataInput&,int& argCount,std::vector<DataInput>&){ return argCount==0; }
+			bool readAll(DataInput&,int& argCount){ return argCount==0; }
 
 			template<typename T>
-			bool readAll(DataInput& d,int& argCount,std::vector<DataInput>& already,MultipleArguments<T>& value){
+			bool readAll(DataInput& d,int& argCount,MultipleArguments<T>& value){
 				if(argCount==0)return true;
 				value.resize(argCount);
 				size_t i=0;
 				while(argCount>0)
-					if(!read(d,argCount,already,value[i++]))
+					if(!TypeDefinition<T>::read(d,argCount,value[i++]))
 						return false;
 				return true;
 			}
 
 			template<typename T,typename... Args>
-			bool readAll(DataInput& d,int& argCount,std::vector<DataInput>& already,T& curr,Args& ... rest){
-				return read(d,argCount,already,curr)&&readAll(d,argCount,already,rest...);
+			bool readAll(DataInput& d,int& argCount,T& curr,Args& ... rest){
+				return TypeDefinition<T>::read(d,argCount,curr)&&readAll(d,argCount,rest...);
 			}
 		}
 
@@ -83,8 +73,7 @@ namespace RpcInternal{
 		bool readDynamicArray(DataInput& data,Args& ... args){
 			DataInput backup=data;
 			int32_t argCount=data.readLength();
-			auto already=std::vector<DataInput>();
-			bool b=ReadAll::readAll(data,argCount,already,args...);
+			bool b=ReadAll::readAll(data,argCount,args...);
 			if(b)return true;
 			data=backup;
 			return false;

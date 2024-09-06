@@ -17,6 +17,7 @@ void connectWifi(){
 void func(const int&){}
 
 
+int x;
 void setup() {
 	Serial.begin(115200);
 	
@@ -25,7 +26,7 @@ void setup() {
 	WebDebugger::setup();
 	
 	Rpc::setName("EspTest");
-	Rpc::setup(RPC_TOKEN,RPC_HOST,4590);
+	Rpc::setup(RPC_TOKEN,RPC_HOST,80);
 
 	auto type=Rpc::registerType("EspTest");
 
@@ -53,11 +54,10 @@ void setup() {
 		});
 	});
 
-	int x;
 	(*type)["test"].add([](const FunctionCallContext& ctx){
-		
+		ctx.resolve();
 	},(int*)nullptr);
-	(*type)["test"].smartProperty(x);
+	(*type)["test2"].smartProperty(x);
 }
 
 void test(){

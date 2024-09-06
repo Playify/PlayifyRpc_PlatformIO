@@ -23,4 +23,10 @@ public:
 			callback(std::vector<String>());
 		});
 	}
+	
+	void getRpcVersion(const Callback<String>& callback){
+		RpcInternal::callRemoteFunction(type,NULL_STRING,"V").then(callback,[callback](const RpcError&){
+			callback("Unknown");
+		});
+	}
 };

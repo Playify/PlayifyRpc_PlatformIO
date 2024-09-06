@@ -25,8 +25,6 @@ namespace Rpc{
 	extern String name;
 	extern String prettyName();
 	extern String id;
-
-	String getVersion();
 }
 
 template<typename T=void>
@@ -36,27 +34,31 @@ using Callback=std::function<void(T t)>;
 #include "types/errors/PredefinedErrors.hpp"
 #include "types/data/DataInput.hpp"
 #include "types/data/DataOutput.hpp"
+
+
+#include "connection/WebSocketConnection.hpp"
+#include "types/functions/PendingCall.hpp"
+
+#include "types/RpcFunction.hpp"
+#include "types/RpcObject.hpp"
+
+#include "types/data/MultipleArguments.hpp"
+#include "types/data/DynamicData.hpp"
 #include "types/data/DynamicWrite.hpp"
 #include "types/data/DynamicRead.hpp"
 #include "types/data/DynamicTypeStringifier.hpp"
-#include "connection/WebSocketConnection.hpp"
 
-#include "types/functions/PendingCall.hpp"
+
 #include "types/functions/FunctionCallContext.hpp"
 #include "internal/RegisteredTypes.hpp"
 #include "internal/CallFunction.hpp"
 
-#include "types/RpcFunction.hpp"
-#include "types/RpcObject.hpp"
 
 #include "connection/receive.hpp"
 
 #include "utils/RpcListener.hpp"
 
-#include "types/data/DynamicData.Impl.hpp"
 #include "internal/CallReceiver.Impl.hpp"
-
-//TODO make current version available
 
 namespace Rpc{
 	//Rpc

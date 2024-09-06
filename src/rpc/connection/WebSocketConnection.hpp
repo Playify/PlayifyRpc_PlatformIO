@@ -97,7 +97,7 @@ namespace RpcInternal{
 					Serial.println((char*)payload);
 					break;
 				case WStype_BIN:
-					receiveRpc(DataInput(payload,length));
+					receiveRpc(DataInput(payload,length,length));
 					break;
 				//continuation frames are not yet handled correctly
 				default:

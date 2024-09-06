@@ -1,4 +1,5 @@
 #pragma once
+#include "Arduino.h"
 
 struct Duration{
 	uint32_t microseconds;

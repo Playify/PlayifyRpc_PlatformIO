@@ -114,7 +114,7 @@ struct FunctionCallContext{
 		DataOutput data;
 		data.writeByte(RpcInternal::RpcConnection::PacketType::FunctionSuccess);
 		data.writeLength(_data->callId);
-		RpcInternal::DynamicData::writeDynamic(data,result);
+		RpcInternal::DynamicData::TypeDefinition<T>::writeDynamic(data,result);
 		RpcInternal::RpcConnection::send(data);
 	}
 	void resolve() const{resolve(nullptr);}

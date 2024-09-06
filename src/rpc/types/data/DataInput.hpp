@@ -6,15 +6,17 @@ class DataInput{
 public:
 	uint8_t* _data;
 	uint32_t _available;
+	uint32_t _initialLength;
 
 public:
 	DataInput():
 			_data(nullptr),
 			_available(0)
 	{}
-	DataInput(uint8_t* data,uint32_t length):
+	DataInput(uint8_t* data,uint32_t length,uint32_t initialLength):
 			_data(data),
-			_available(length)
+			_available(length),
+			_initialLength(initialLength)
 	{}
 
 	//DataInput& operator=(const DataInput&) = delete; // non copyable
@@ -33,6 +35,16 @@ private:
 public:
 	uint32_t available() const{
 		return _available;
+	}
+	uint32_t index() const{
+		return _initialLength-_available;
+	}
+	DataInput atIndex(uint32_t index) const{
+		return DataInput(
+			_data+_available-_initialLength+index,
+			_initialLength-index,
+			_initialLength
+			);
 	}
 	/*
 

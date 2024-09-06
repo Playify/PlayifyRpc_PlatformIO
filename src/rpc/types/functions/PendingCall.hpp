@@ -11,6 +11,11 @@ namespace RpcInternal{
 				Serial.println("[Rpc] Error while receiving message: Arguments do not match the receiver");
 		};
 	}
+	
+	namespace DynamicData{
+		template<typename... Args>
+		void writeDynamicArray(DataOutput& data,Args... args);
+	}
 }
 
 
@@ -42,6 +47,7 @@ struct PendingCall{
 		}
 
 		std::vector<uint8_t> _success;
+		uint32_t _initialLength;
 		RpcError _error{""};
 		std::function<void(DataInput result)> onSuccess;
 		std::function<void(RpcError)> onError;
@@ -53,9 +59,10 @@ struct PendingCall{
 			uint32_t available=data.available();
 			_success.resize(available);
 			data.readFully(_success.data(),available);
+			_initialLength=data._initialLength;
 
 			if(!onSuccess)return;
-			onSuccess(DataInput(_success.data(),_success.size()));
+			onSuccess(DataInput(_success.data(),_success.size(),data._initialLength));
 			onSuccess=nullptr;//no longer used, can be freed
 			onError=nullptr;//no longer used, can be freed
 		}
@@ -137,7 +144,7 @@ struct PendingCall{
 				break;
 			case Success:
 				if(onSuccess!=nullptr)
-					onSuccess(DataInput(_data->_success.data(),_data->_success.size()));
+					onSuccess(DataInput(_data->_success.data(),_data->_success.size(),_data->_initialLength));
 				break;
 			case Error:
 				break;
@@ -180,7 +187,7 @@ struct PendingCall{
 			case Success:
 				_data->onError=onError;//Set error handler while running onSuccess, in case of casting error
 				if(onSuccess!=nullptr)
-					onSuccess(DataInput(_data->_success.data(),_data->_success.size()));
+					onSuccess(DataInput(_data->_success.data(),_data->_success.size(),_data->_initialLength));
 				_data->onError=nullptr;
 				break;
 			case Error:

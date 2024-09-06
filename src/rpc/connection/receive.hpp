@@ -1,5 +1,7 @@
 
 namespace RpcInternal{
+	String getRpcVersion();
+	
 	namespace RpcConnection{
 		std::map<int32_t,std::shared_ptr<FunctionCallContext::Shared>> currentlyExecuting;
 		std::vector<String> reportedTypes;
@@ -192,6 +194,8 @@ namespace RpcInternal{
 					for(const auto& pair:invoker) methods[i++]=pair.first;
 					fcc.resolve(methods);
 					return;
+				}else if(meta=="V"){
+					fcc.resolve(String(getRpcVersion()+" C++"));
 				}
 			}else if(input.tryGetArgs(meta,method,ts)){
 				if(meta=="S"){
@@ -203,7 +207,9 @@ namespace RpcInternal{
 					getMethodSignatures(fcc,invoker,type,method,false);
 					return;
 				}
-			}else meta=NULL_STRING;
+			}else if(input.readLength()==0||!RpcInternal::DynamicData::readDynamic(input,meta)){
+				meta=NULL_STRING;
+			}
 
 			fcc.reject(RpcMetaMethodNotFoundError(type,meta));
 		}
