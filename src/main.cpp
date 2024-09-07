@@ -57,6 +57,9 @@ void setup() {
 	(*type)["test"].add([](const FunctionCallContext& ctx){
 		ctx.resolve();
 	},(int*)nullptr);
+	(*type)["test"].add([](const FunctionCallContext& ctx){
+		ctx.resolve();
+	},"TEST");
 	(*type)["test2"].smartProperty(x);
 }
 
@@ -97,6 +100,8 @@ void test(){
 	RpcInternal::DynamicData::getMethodSignature(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function([](const FunctionCallContext& ctx,int multi){
 
 	})),true);
+	
+	std::array<int,4> y={1,2,2};
 }
 
 
