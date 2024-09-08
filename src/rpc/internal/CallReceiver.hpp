@@ -19,7 +19,7 @@ struct CallReceiver{
 	template<typename Func,typename... Args>
 	CallReceiver& add(Func func,std::pair<String,String> returns,Args... names);
 	template<typename Func>
-	CallReceiver& add(Func func);
+	[[deprecated("Use overload with return type and named parameters instead")]]CallReceiver& add(Func func);
 	
 	template<typename T>
 	CallReceiver& smartProperty(T& ref,const std::function<void()>& onChange=nullptr);

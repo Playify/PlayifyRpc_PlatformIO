@@ -61,6 +61,9 @@ void setup() {
 		ctx.resolve();
 	},"TEST");
 	(*type)["test2"].smartProperty(x);
+	(*type)["test"].add([](const FunctionCallContext& ctx){
+		ctx.resolve();
+	});
 }
 
 void test(){

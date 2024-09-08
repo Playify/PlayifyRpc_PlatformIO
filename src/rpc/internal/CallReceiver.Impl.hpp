@@ -39,6 +39,7 @@ CallReceiver& CallReceiver::add(Func func){
 	signatures.push_back([function](bool ts)->MethodSignatureTuple{
 		return RpcInternal::DynamicData::getMethodSignature(function,ts,ts?"unknown":"object?");
 	});
+	return *this;
 }
 
 template<typename Func,typename... Args,typename Return,typename std::enable_if<!std::is_same<Return, const char>::value, int>::type>
