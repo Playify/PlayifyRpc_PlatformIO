@@ -90,8 +90,8 @@ namespace RpcInternal{
 			}																									\
 		};
 
-		NUMBER_TYPE(int8_t,'i',writeInt,"number","byte")
-		NUMBER_TYPE(uint8_t,'i',writeInt,"number","sbyte")
+		NUMBER_TYPE(int8_t,'i',writeInt,"number","sbyte")
+		NUMBER_TYPE(uint8_t,'i',writeInt,"number","byte")
 		NUMBER_TYPE(int16_t,'i',writeInt,"number","short")
 		NUMBER_TYPE(uint16_t,'i',writeInt,"number","ushort")
 		NUMBER_TYPE(int32_t,'i',writeInt,"number","int")
