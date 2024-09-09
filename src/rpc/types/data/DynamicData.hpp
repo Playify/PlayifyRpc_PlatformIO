@@ -114,7 +114,7 @@ namespace RpcInternal{
 					return true;
 				}
 				if(type<0&&(-type)%4==0){
-					DataInput data2=data.atIndex(-type/4);
+					DataInput data2=data.goBack(-type/4);
 					return read(data2,argCount,value);
 				}
 				if(type<0&&((-type)%4)==1){
@@ -162,7 +162,7 @@ namespace RpcInternal{
 				int32_t type=data.readLength();
 				
 				if(type<0&&(-type)%4==0){
-					DataInput data2=data.atIndex(-type/4);
+					DataInput data2=data.goBack(-type/4);
 					return read(data2,argCount,value);
 				}
 
@@ -189,7 +189,7 @@ namespace RpcInternal{
 				int32_t type=data.readLength();
 
 				if(type<0&&(-type)%4==0){
-					DataInput data2=data.atIndex(-type/4);
+					DataInput data2=data.goBack(-type/4);
 					return read(data2,argCount,value);
 				}
 
@@ -216,7 +216,7 @@ namespace RpcInternal{
 				int32_t type=data.readLength();
 
 				if(type<0&&(-type)%4==0){
-					DataInput data2=data.atIndex(-type/4);
+					DataInput data2=data.goBack(-type/4);
 					return read(data2,argCount,value);
 				}
 
@@ -244,7 +244,7 @@ namespace RpcInternal{
 				int32_t type=data.readLength();
 				
 				if(type<0&&(-type)%4==0){
-					DataInput data2=data.atIndex(-type/4);
+					DataInput data2=data.goBack(-type/4);
 					return read(data2,argCount,value);
 				}
 
@@ -287,7 +287,7 @@ namespace RpcInternal{
 				int32_t type=data.readLength();
 
 				if(type<0&&(-type)%4==0){
-					DataInput data2=data.atIndex(-type/4);
+					DataInput data2=data.goBack(-type/4);
 					return read(data2,argCount,value);
 				}
 
@@ -322,7 +322,7 @@ namespace RpcInternal{
 				int32_t type=data.readLength();
 
 				if(type<0&&(-type)%4==0){
-					DataInput data2=data.atIndex(-type/4);
+					DataInput data2=data.goBack(-type/4);
 					return read(data2,argCount,value);
 				}
 

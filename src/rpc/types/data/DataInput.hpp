@@ -39,10 +39,10 @@ public:
 	uint32_t index() const{
 		return _initialLength-_available;
 	}
-	DataInput atIndex(uint32_t index) const{
+	DataInput goBack(uint32_t offset) const{
 		return DataInput(
-			_data+_available-_initialLength+index,
-			_initialLength-index,
+				_data-offset,
+				_available+offset,
 			_initialLength
 			);
 	}
