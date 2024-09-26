@@ -11,7 +11,7 @@
 #endif
 
 #include "vector"
-#include "internal/make_function.hpp"
+#include "internal/helpers.hpp"
 #include "internal/CallReceiver.hpp"
 
 struct PendingCall;
@@ -19,6 +19,11 @@ struct PendingCall;
 namespace RpcInternal{
 	template<typename... Args>
 	PendingCall callRemoteFunction(String type,String method,Args... args);
+
+
+	using MessageFunc=std::function<void(DataInput rawData)>;
+	template<typename T>
+	MessageFunc make_messageFunc(T func);
 }
 
 namespace Rpc{
@@ -147,10 +152,6 @@ namespace Rpc{
 	}
 
 	void unregisterType(const String& type){RpcInternal::RegisteredTypes::unregisterType(type);}
-	
-	
-	template<typename T>
-	MessageFunc createMessageFunc(T t){return RpcInternal::make_messageFunc(t);}//Helper for registering functions as message receiver
 
 
 	void checkTypes(const std::vector<String>& types,const Callback<int32_t>& callback){

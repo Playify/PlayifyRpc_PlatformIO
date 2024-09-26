@@ -3,96 +3,75 @@
 
 template<typename T>
 CallReceiver& CallReceiver::smartProperty(T& ref,const std::function<void()>& onChange){
-	add([&ref](const FunctionCallContext& ctx){
-		ctx.resolve(ref);
-	},ReturnType<T>());
-	add([&ref,onChange](const FunctionCallContext& ctx,T newVal){
-		ctx.resolve(ref=newVal);
+	func([&ref](){return ref;});
+	func([&ref,onChange](T value){
+		ref=value;
 		if(onChange)onChange();
-	},ReturnType<T>(),"value");
+		return ref;
+	},"value");
 	return *this;
 }
+
 template<>
 CallReceiver& CallReceiver::smartProperty(bool& ref,const std::function<void()>& onChange){
-	add([&ref](const FunctionCallContext& ctx){
-		ctx.resolve(ref);
-	},(bool*)nullptr);
-	add([&ref,onChange](const FunctionCallContext& ctx,bool newVal){
-		ctx.resolve(ref=newVal);
+	func([&ref](){return ref;});
+	func([&ref,onChange](bool value){
+		ref=value;
 		if(onChange)onChange();
-	},ReturnType<bool>(),"value");
-	add([&ref,onChange](const FunctionCallContext& ctx,nullptr_t){
-		ctx.resolve(ref=!ref);
+		return ref;
+	},"value");
+	func([&ref,onChange](nullptr_t){
+		ref=!ref;
 		if(onChange)onChange();
-	},ReturnType<bool>(),"toggle");
+		return ref;
+	},"toggle");
 	return *this;
+}
+
+template<typename T>
+CallReceiver& CallReceiver::getter(T& ref){
+	return func([&ref](){return ref;});
 }
 
 
 
-template<typename Func>
-CallReceiver& CallReceiver::add(Func func){
-	auto function=RpcInternal::removeConstReferenceParameters(RpcInternal::make_function(func));
-	callers.push_back([function](const FunctionCallContext& ctx,DataInput args){
-		return RpcInternal::DynamicData::callDynamicArray(args,function,ctx);
-	});
-	signatures.push_back([function](bool ts)->MethodSignatureTuple{
-		return RpcInternal::DynamicData::getMethodSignature(function,ts,ts?"unknown":"object?");
-	});
-	return *this;
-}
+template<typename Func,typename... Args,typename Return>
+CallReceiver& CallReceiver::add(Func func,ReturnType<Return> returns,Args... names){
+	static_assert(sizeof...(names)==RpcInternal::Helpers::MakeFunction::function_traits<Func>::count-1,"Invalid amount of parameter names provided");
 
-template<typename Func,typename... Args,typename Return,typename std::enable_if<!std::is_same<Return, const char>::value, int>::type>
-CallReceiver& CallReceiver::add(Func func,Return* returns,Args... names){
-	static_assert(sizeof...(names)==RpcInternal::function_traits<Func>::count-1,"Invalid amount of parameter names provided");
-	auto function=RpcInternal::removeConstReferenceParameters(RpcInternal::make_function(func));
+	auto function=RpcInternal::Helpers::function(func);
 	std::array<String,sizeof...(names)> array={std::forward<Args>(names)...};
 	callers.push_back([function](const FunctionCallContext& ctx,DataInput args){
 		return RpcInternal::DynamicData::callDynamicArray(args,function,ctx);
 	});
 	signatures.push_back([function,array,returns](bool ts)->MethodSignatureTuple{
-		return RpcInternal::DynamicData::getMethodSignature(function,ts,array,returns);
+		return RpcInternal::DynamicData::getMethodSignature(function,returns,array,ts);
 	});
 	return *this;
 }
-template<typename Func,typename... Args,typename Return>
-CallReceiver& CallReceiver::add(Func func,ReturnType<Return>,Args... names){
-	static_assert(sizeof...(names)==RpcInternal::function_traits<Func>::count-1,"Invalid amount of parameter names provided");
-	auto function=RpcInternal::removeConstReferenceParameters(RpcInternal::make_function(func));
+
+
+template<typename Func,typename... Args>
+CallReceiver& CallReceiver::func(Func func,Args ...names){
+	static_assert(sizeof...(names)==RpcInternal::Helpers::MakeFunction::function_traits<Func>::count,"Invalid amount of parameter names provided");
+
+	auto function=RpcInternal::Helpers::function(func);
 	std::array<String,sizeof...(names)> array={std::forward<Args>(names)...};
 	callers.push_back([function](const FunctionCallContext& ctx,DataInput args){
 		return RpcInternal::DynamicData::callDynamicArray(args,function,ctx);
 	});
 	signatures.push_back([function,array](bool ts)->MethodSignatureTuple{
-		return RpcInternal::DynamicData::getMethodSignature(function,ts,array,(Return*)nullptr);
+		return RpcInternal::DynamicData::getMethodSignature(function,array,ts);
 	});
 	return *this;
 }
 
-template<typename Func,typename... Args>
-	CallReceiver& CallReceiver::add(Func func,const char* returns,Args... names){
-	static_assert(sizeof...(names)==RpcInternal::function_traits<Func>::count-1,"Invalid amount of parameter names provided");
-	auto function=RpcInternal::removeConstReferenceParameters(RpcInternal::make_function(func));
-	std::array<String,sizeof...(names)> array={std::forward<Args>(names)...};
-	callers.push_back([function](const FunctionCallContext& ctx,DataInput args){
-		return RpcInternal::DynamicData::callDynamicArray(args,function,ctx);
-	});
-	signatures.push_back([function,array,returns](bool ts)->MethodSignatureTuple{
-		return RpcInternal::DynamicData::getMethodSignature(function,ts,array,returns);
-	});
-	return *this;
-}
 
-template<typename Func,typename... Args>
-	CallReceiver& CallReceiver::add(Func func,std::pair<String,String> returns,Args... names){
-	static_assert(sizeof...(names)==RpcInternal::function_traits<Func>::count-1,"Invalid amount of parameter names provided");
-	auto function=RpcInternal::removeConstReferenceParameters(RpcInternal::make_function(func));
-	std::array<String,sizeof...(names)> array={std::forward<Args>(names)...};
-	callers.push_back([function](const FunctionCallContext& ctx,DataInput args){
-		return RpcInternal::DynamicData::callDynamicArray(args,function,ctx);
-	});
-	signatures.push_back([function,array,returns](bool ts)->MethodSignatureTuple{
-		return RpcInternal::DynamicData::getMethodSignature(function,ts,array,ts?returns.first:returns.second);
-	});
-	return *this;
+template<typename T>
+RpcInternal::MessageFunc RpcInternal::make_messageFunc(T func){
+	auto function=RpcInternal::Helpers::function(func);
+	return [function](DataInput data){
+		if(!RpcInternal::DynamicData::callDynamicArray(data,function))
+			Serial.println("[Rpc] Error while receiving message: Arguments do not match the receiver");
+	};
 }

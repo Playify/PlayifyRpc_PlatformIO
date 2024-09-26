@@ -16,6 +16,15 @@ namespace RpcInternal{
 			}
 		};
 		template<>
+		struct TypeDefinition<void>{
+			static void writeDynamic(DataOutput& data){
+				data.writeLength('n');
+			}
+			static String getTypeName(bool){
+				return "void";
+			}
+		};
+		template<>
 		struct TypeDefinition<nullptr_t>{
 			static bool read(DataInput& data,int& argCount,nullptr_t&){
 				if(argCount==0)return false;
@@ -355,7 +364,7 @@ namespace RpcInternal{
 // Recursive case: Write each tuple element
 			template<std::size_t Index = 0>
 			auto static writeDynamicTuple(DataOutput& data, const std::tuple<Types...>& value) ->typename std::enable_if<Index < sizeof...(Types), void>::type{
-				TypeDefinition<typename remove_const_ref<decltype(std::get<Index>(value))>::type>::writeDynamic(data, std::get<Index>(value));
+				TypeDefinition<typename Helpers::ConstRef::remove_const_ref<decltype(std::get<Index>(value))>::type>::writeDynamic(data, std::get<Index>(value));
 				writeDynamicTuple<Index + 1>(data, value);
 			}
 			template<typename Ignored>

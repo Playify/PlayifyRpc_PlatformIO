@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <WebSocketsClient.h>
 
 
 #include "secrets.hpp"
@@ -18,32 +17,33 @@ void func(const int&){}
 
 
 int x;
+RegisteredType type;
 void setup() {
 	Serial.begin(115200);
-	
+
 	connectWifi();
 
 	WebDebugger::setup();
-	
+
 	Rpc::setName("EspTest");
 	Rpc::setup(RPC_TOKEN,RPC_HOST,80);
 
-	auto type=Rpc::registerType("EspTest");
+	Rpc::registerType("EspTest",type);
 
-	(*type)["params"].add([](const FunctionCallContext& ctx,const MultipleArguments<String>& args){
+	type["params"].add([](const FunctionCallContext& ctx,const MultipleArguments<String>& args){
 		String result;
 		for(const auto& s: args)result+=s;
 
 		ctx.resolve(result);
-	});
-	(*type)["arr"].add([](const FunctionCallContext& ctx,const std::vector<String>& args){
+	},ReturnType<String>(),"args");
+	type["arr"].add([](const FunctionCallContext& ctx,const std::vector<String>& args){
 		String result;
 		for(const auto& s: args)result+=s;
 
 		ctx.resolve(result);
-	});
-	(*type)["call"].add([](const FunctionCallContext& ctx,RpcFunction func){
-		
+	},ReturnType<String>(),"args");
+	type["call"].add([](const FunctionCallContext& ctx,RpcFunction func){
+
 		func.call().then([ctx](DataInput data){
 			Serial.println("Forwarding success");
 			ctx.resolve(data);
@@ -52,29 +52,34 @@ void setup() {
 			e.printStackTrace();
 			ctx.reject(e);
 		});
-	});
+	},ReturnType<nullptr_t>(),"func");
 
-	(*type)["test"].add([](const FunctionCallContext& ctx){
+	type["test"].add([](const FunctionCallContext& ctx){
 		ctx.resolve();
-	},(int*)nullptr);
-	(*type)["test"].add([](const FunctionCallContext& ctx){
+	},ReturnType<int>());
+	type["test"].add([](const FunctionCallContext& ctx){
 		ctx.resolve();
-	},"TEST");
-	(*type)["test2"].smartProperty(x);
-	(*type)["test"].add([](const FunctionCallContext& ctx){
-		ctx.resolve();
+	},nullptr);
+	type["test2"].smartProperty(x);
+
+	type["wrap"].func([](int i){
+		return i+1;
+	},"i");
+	type["wrap"].func([](int i){
+	},"i");
+
+	type["wrap"].func([](){
 	});
 }
 
 void test(){
-	RegisteredType  type;
 	type["func2"].add([](FunctionCallContext ctx,const MultipleArguments<String>& args){
 		String result;
 		for(const auto& s: args)result+=s;
 
 		ctx.resolve(result);
-	});
-	
+	},ReturnType<String>(),"args");
+
 	std::vector<String> null;
 	DataInput data;
 	RpcInternal::DynamicData::readDynamic(data,null);
@@ -82,28 +87,12 @@ void test(){
 
 	});
 
-	data.tryCall(func);
 
 	Rpc::callFunction("EspTest","func").then([](String z){
 	});
 	Rpc::callFunction("EspTest","func").then([](){
 	});
-	
-	
 
-	RpcInternal::DynamicData::getMethodSignature(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function([](const FunctionCallContext& ctx,MultipleArguments<bool> multi){
-
-	})),true);
-	RpcInternal::DynamicData::getMethodSignature(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function([](const FunctionCallContext& ctx,std::vector<bool> multi){
-
-	})),true);/*
-	RpcInternal::DynamicData::getMethodSignature(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function([](const FunctionCallContext& ctx,std::exception multi){
-
-	})),true);*/
-	RpcInternal::DynamicData::getMethodSignature(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function([](const FunctionCallContext& ctx,int multi){
-
-	})),true);
-	
 	std::array<int,4> y={1,2,2};
 }
 

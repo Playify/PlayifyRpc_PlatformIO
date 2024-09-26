@@ -1,5 +1,3 @@
-#include <utility>
-
 
 struct FunctionCallContext{
 
@@ -18,9 +16,9 @@ struct FunctionCallContext{
 		bool isCancelled=false;
 		std::function<void()> onCancel;
 
-		MessageFunc listener=nullptr;
+		RpcInternal::MessageFunc listener=nullptr;
 
-		void setMessageListener(MessageFunc func){
+		void setMessageListener(RpcInternal::MessageFunc func){
 			listener=std::move(func);
 		}
 		void doReceive(DataInput data) const{
@@ -79,18 +77,7 @@ struct FunctionCallContext{
 		RpcInternal::DynamicData::writeDynamicArray(data,args...);
 		RpcInternal::RpcConnection::send(data);
 	}
-
-	void setMessageListener(MessageFunc func) const{
-		if(!_data)return;
-		_data->setMessageListener(std::move(func));
-	}
-
-	template<typename... Args>
-	void setMessageListener(std::function<void(Args...)> func) const{
-		if(!_data)return;
-		_data->setMessageListener(RpcInternal::make_messageFunc(func));
-	}
-
+	
 	template<typename Func>
 	void setMessageListener(Func func) const{
 		if(!_data)return;

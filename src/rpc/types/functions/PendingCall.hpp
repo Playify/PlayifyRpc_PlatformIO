@@ -1,17 +1,7 @@
 
 
-using MessageFunc=std::function<void(DataInput rawData)>;
 
 namespace RpcInternal{
-	template<typename T>
-	MessageFunc make_messageFunc(T t){
-		auto func=make_function(t);
-		return [func](DataInput data){
-			if(!data.tryCall(func))
-				Serial.println("[Rpc] Error while receiving message: Arguments do not match the receiver");
-		};
-	}
-	
 	namespace DynamicData{
 		template<typename... Args>
 		void writeDynamicArray(DataOutput& data,Args... args);
@@ -28,13 +18,13 @@ struct PendingCall{
 
 	struct Shared{
 		const int32_t callId;
-		MessageFunc listener=nullptr;
+		RpcInternal::MessageFunc listener=nullptr;
 
 		explicit Shared(int32_t callId):callId(callId){}
 
 		bool isCancelled=false;
 
-		void setMessageListener(MessageFunc func){
+		void setMessageListener(RpcInternal::MessageFunc func){
 			listener=std::move(func);
 		}
 
@@ -113,17 +103,6 @@ struct PendingCall{
 		RpcInternal::RpcConnection::send(data);
 	}
 
-	void setMessageListener(MessageFunc func) const{
-		if(!_data)return;
-		_data->setMessageListener(std::move(func));
-	}
-
-	template<typename... Args>
-	void setMessageListener(std::function<void(Args...)> func) const{
-		if(!_data)return;
-		_data->setMessageListener(RpcInternal::make_messageFunc(func));
-	}
-
 	template<typename Func>
 	void setMessageListener(Func func) const{
 		if(!_data)return;
@@ -172,8 +151,7 @@ struct PendingCall{
 		return *this;
 	}
 
-	const PendingCall& then(const std::function<void(DataInput result)>& onSuccess,
-	const std::function<void(RpcError error)>& onError) const{
+	const PendingCall& then(const std::function<void(DataInput result)>& onSuccess,const std::function<void(RpcError error)>& onError) const{
 		if(!_data){
 			if(onError!=nullptr)
 				onError(RpcError("PendingCall not initialized"));
@@ -242,12 +220,11 @@ public:
 
 	template<typename SuccessFunc>
 	const PendingCall& then(const SuccessFunc& onSuccess) const{
-		return _then(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function(onSuccess)));
+		return _then(RpcInternal::Helpers::function(onSuccess));
 	}
 
 	template<typename T>
-	const PendingCall& then(const std::function<void(T result)>& onSuccess,
-		const std::function<void(RpcError error)>& onError) const{
+	const PendingCall& then(const std::function<void(T result)>& onSuccess,const std::function<void(RpcError error)>& onError) const{
 		return _then(onSuccess,onError);
 	}
 
@@ -258,7 +235,10 @@ public:
 
 	template<typename SuccessFunc>
 	const PendingCall& then(const SuccessFunc& onSuccess,const std::function<void(RpcError error)>& onError) const{
-		return _then(RpcInternal::removeConstReferenceParameters(RpcInternal::make_function(onSuccess)),onError);
+		return _then(RpcInternal::Helpers::function(onSuccess),onError);
+	}
+	const PendingCall& finally(const std::function<void(bool success)>& callback) const{
+		return then(RpcInternal::Helpers::MakeFunction::make_function([callback](DataInput){callback(true);}),[callback](RpcError){callback(false);});
 	}
 
 

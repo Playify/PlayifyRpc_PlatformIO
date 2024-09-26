@@ -20,34 +20,6 @@ namespace RpcInternal{
 		}
 
 
-		namespace Apply{
-			template<size_t N>
-			struct Apply{
-				template<typename F,typename T,typename... A>
-				static inline auto
-				apply(F&& f,T&& t,A&& ... a)->decltype(Apply<N-1>::apply(std::forward<F>(f),std::forward<T>(t),
-																		 std::get<N-1>(std::forward<T>(t)),
-																		 std::forward<A>(a)...)){
-					return Apply<N-1>::apply(std::forward<F>(f),std::forward<T>(t),std::get<N-1>(std::forward<T>(t)),
-											 std::forward<A>(a)...);
-				}
-			};
-
-			template<>
-			struct Apply<0>{
-				template<typename F,typename T,typename... A>
-				static inline auto apply(F&& f,T&&,A&& ... a)->decltype(std::forward<F>(f)(std::forward<A>(a)...)){
-					return std::forward<F>(f)(std::forward<A>(a)...);
-				}
-			};
-
-			template<typename F,typename T>
-			inline auto apply(F&& f,T&& t)->decltype(Apply<std::tuple_size<typename std::decay<T>::type>::value>::apply(
-					std::forward<F>(f),std::forward<T>(t))){
-				return Apply<std::tuple_size<typename std::decay<T>::type>::value>::apply(std::forward<F>(f),
-																						  std::forward<T>(t));
-			}
-		}
 
 		namespace ReadAll{
 			bool readAll(DataInput&,int& argCount){ return argCount==0; }
@@ -86,26 +58,39 @@ namespace RpcInternal{
 		}
 
 
-		template<typename... Args>
-		bool callDynamicArray(DataInput& data,std::function<void(Args...)> func){
-			std::tuple<remove_const_ref_pack_t<Args>...> argsTuple;
+		template<typename FunctionCallContext,typename Return,typename... Args>
+		bool callDynamicArray(DataInput& data,std::function<Return(Args...)> func,const FunctionCallContext& ctx){
+			std::tuple<RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>...> argsTuple;
 
-			bool b=Apply::apply([&data](remove_const_ref_pack_t<Args>& ... args){
+			bool b=RpcInternal::Helpers::Apply::apply([&data](RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>& ... args){
 				return readDynamicArray(data,args...);
 			},argsTuple);
-			if(b) Apply::apply(func,argsTuple);
+			if(b) ctx.resolve(RpcInternal::Helpers::Apply::apply(func,argsTuple));
+			return b;
+		}
+		template<typename FunctionCallContext,typename... Args>
+		bool callDynamicArray(DataInput& data,std::function<void(Args...)> func,const FunctionCallContext& ctx){
+			std::tuple<RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>...> argsTuple;
+
+			bool b=RpcInternal::Helpers::Apply::apply([&data](RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>& ... args){
+				return readDynamicArray(data,args...);
+			},argsTuple);
+			if(b){
+				RpcInternal::Helpers::Apply::apply(func,argsTuple);
+				ctx.resolve();
+			}
 			return b;
 		}
 
-		template<typename Arg0,typename... Args>
-		bool callDynamicArray(DataInput& data,std::function<void(Arg0,Args...)> func,const Arg0& ctx){
-			std::tuple<Arg0,remove_const_ref_pack_t<Args>...> argsTuple;
+		template<typename FunctionCallContext,typename... Args>
+		bool callDynamicArray(DataInput& data,std::function<void(FunctionCallContext,Args...)> func,const FunctionCallContext& ctx){
+			std::tuple<FunctionCallContext,RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>...> argsTuple;
 
-			bool b=Apply::apply([&data,&ctx](Arg0& arg0,remove_const_ref_pack_t<Args>& ... args){
+			bool b=RpcInternal::Helpers::Apply::apply([&data,&ctx](FunctionCallContext& arg0,RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>& ... args){
 				arg0=ctx;
 				return readDynamicArray(data,args...);
 			},argsTuple);
-			if(b) Apply::apply(removeConstReferenceParameters(func),argsTuple);
+			if(b) RpcInternal::Helpers::Apply::apply(RpcInternal::Helpers::ConstRef::removeConstReferenceParameters(func),argsTuple);
 			return b;
 		}
 
@@ -123,14 +108,12 @@ namespace RpcInternal{
 
 template<typename Func>
 bool DataInput::tryCall(Func func){
-	return RpcInternal::DynamicData::callDynamicArray(*this,RpcInternal::removeConstReferenceParameters(
-															  RpcInternal::make_function(func)));
+	return RpcInternal::DynamicData::callDynamicArray(*this,RpcInternal::Helpers::function(func));
 }
 
 template<typename Func>
 bool DataInput::tryCallSingle(Func func){
-	return RpcInternal::DynamicData::callDynamicSingle(*this,RpcInternal::removeConstReferenceParameters(
-			RpcInternal::make_function(func)));
+	return RpcInternal::DynamicData::callDynamicSingle(*this,RpcInternal::Helpers::function(func));
 }
 
 template<typename T>
