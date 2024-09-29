@@ -44,7 +44,7 @@ CallReceiver& CallReceiver::add(Func func,ReturnType<Return> returns,Args... nam
 	callers.push_back([function](const FunctionCallContext& ctx,DataInput args){
 		return RpcInternal::DynamicData::callDynamicArray(args,function,ctx);
 	});
-	signatures.push_back([function,array,returns](bool ts)->MethodSignatureTuple{
+	signatures.push_back([function,array,returns](bool ts)->RpcInternal::MethodSignatureTuple{
 		return RpcInternal::DynamicData::getMethodSignature(function,returns,array,ts);
 	});
 	return *this;
@@ -60,7 +60,7 @@ CallReceiver& CallReceiver::func(Func func,Args ...names){
 	callers.push_back([function](const FunctionCallContext& ctx,DataInput args){
 		return RpcInternal::DynamicData::callDynamicArray(args,function,ctx);
 	});
-	signatures.push_back([function,array](bool ts)->MethodSignatureTuple{
+	signatures.push_back([function,array](bool ts)->RpcInternal::MethodSignatureTuple{
 		return RpcInternal::DynamicData::getMethodSignature(function,array,ts);
 	});
 	return *this;

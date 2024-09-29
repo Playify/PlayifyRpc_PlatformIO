@@ -40,7 +40,7 @@ namespace RpcInternal{
 			fcc.reject(RpcMethodNotFoundError(type,method));
 			return;
 		}
-		std::vector<MethodSignatureTuple> signatures;
+		std::vector<RpcInternal::MethodSignatureTuple> signatures;
 		for(auto& signature:methodIterator->second.signatures)
 			signatures.push_back(signature(ts));
 		fcc.resolve(signatures);

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <utility>
+#include <list>
+#include "vector"
 
 #if ESP32
 
@@ -10,7 +12,6 @@
 #include "ESP8266WiFi.h"
 #endif
 
-#include "vector"
 #include "internal/helpers.hpp"
 #include "internal/CallReceiver.hpp"
 
@@ -22,14 +23,25 @@ namespace RpcInternal{
 
 
 	using MessageFunc=std::function<void(DataInput rawData)>;
+
 	template<typename T>
 	MessageFunc make_messageFunc(T func);
+
+	std::list<std::function<bool()>> onLoopCallbacks;
 }
 
 namespace Rpc{
 	extern String name;
+
 	extern String prettyName();
+
 	extern String id;
+
+
+	//Will be called on loop(), when returning true, the function gets removed
+	void addOnLoop(std::function<bool()> func){
+		RpcInternal::onLoopCallbacks.push_back(func);
+	}
 }
 
 template<typename T=void>
@@ -61,15 +73,14 @@ using Callback=std::function<void(T t)>;
 
 #include "connection/receive.hpp"
 
-#include "utils/RpcListener.hpp"
-
 #include "internal/CallReceiver.Impl.hpp"
+#include "utils/RpcHelpers.hpp"
 
 namespace Rpc{
 	//Rpc
 	String id;
 
-	String prettyName(){return name!=NULL_STRING?name+" ("+id+")":id;}
+	String prettyName(){ return name!=NULL_STRING?name+" ("+id+")":id; }
 
 	String name=NULL_STRING;
 
@@ -88,25 +99,22 @@ namespace Rpc{
 
 	void loop(){
 		RpcInternal::RpcConnection::loop();
+
+		for(auto it=RpcInternal::onLoopCallbacks.begin();it!=RpcInternal::onLoopCallbacks.end();)
+			if((*it)()) it=RpcInternal::onLoopCallbacks.erase(it);
+			else ++it;
 	}
 
-	bool isConnected(){return RpcInternal::RpcConnection::connected;}
+	bool isConnected(){ return RpcInternal::RpcConnection::connected; }
 
 	//Functions
-	RpcObject createObject(String type){return RpcObject(std::move(type));}
+	RpcObject createObject(String type){ return RpcObject(std::move(type)); }
 
-	RpcFunction createFunction(String type,String method){return RpcFunction(std::move(type),std::move(method));}
+	RpcFunction createFunction(String type,String method){ return RpcFunction(std::move(type),std::move(method)); }
 
 	RpcFunction registerFunction(CallReceiver func){
 		String method(RpcInternal::RegisteredTypes::nextFunctionId++);
 		RpcInternal::RegisteredTypes::registeredFunctions[method]=std::move(func);
-		return RpcFunction("$"+id,method);
-	}
-
-	template<typename CallReceiver>
-	RpcFunction registerFunction(CallReceiver func){
-		String method(RpcInternal::RegisteredTypes::nextFunctionId++);
-		RpcInternal::RegisteredTypes::registeredFunctions[method]=CallReceiver(func);
 		return RpcFunction("$"+id,method);
 	}
 
@@ -139,11 +147,11 @@ namespace Rpc{
 		return "$"+Rpc::id+"$"+String(uuid);
 	}
 
-	RegisteredType* registerType(const String& type){return RpcInternal::RegisteredTypes::registerType(type);}
+	RegisteredType* registerType(const String& type){ return RpcInternal::RegisteredTypes::registerType(type); }
 
-	void registerType(const String& type,RegisteredType* map){RpcInternal::RegisteredTypes::registerType(type,map);}
+	void registerType(const String& type,RegisteredType* map){ RpcInternal::RegisteredTypes::registerType(type,map); }
 
-	void registerType(const String& type,RegisteredType& map){RpcInternal::RegisteredTypes::registerType(type,&map);}
+	void registerType(const String& type,RegisteredType& map){ RpcInternal::RegisteredTypes::registerType(type,&map); }
 
 	String registerType(RegisteredType& map){
 		String type=Rpc::generateTypeName();
@@ -151,7 +159,7 @@ namespace Rpc{
 		return type;
 	}
 
-	void unregisterType(const String& type){RpcInternal::RegisteredTypes::unregisterType(type);}
+	void unregisterType(const String& type){ RpcInternal::RegisteredTypes::unregisterType(type); }
 
 
 	void checkTypes(const std::vector<String>& types,const Callback<int32_t>& callback){

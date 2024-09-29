@@ -103,8 +103,8 @@ struct PendingCall{
 		RpcInternal::RpcConnection::send(data);
 	}
 
-	template<typename Func>
-	void setMessageListener(Func func) const{
+	template<typename MessageFunc>
+	void setMessageListener(MessageFunc func) const{
 		if(!_data)return;
 		_data->setMessageListener(RpcInternal::make_messageFunc(func));
 	}

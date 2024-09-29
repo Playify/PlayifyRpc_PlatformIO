@@ -58,6 +58,7 @@ namespace RpcInternal{
 		}
 
 
+		//CallReceiver without FunctionCallContext argument, returning anything
 		template<typename FunctionCallContext,typename Return,typename... Args>
 		bool callDynamicArray(DataInput& data,std::function<Return(Args...)> func,const FunctionCallContext& ctx){
 			std::tuple<RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>...> argsTuple;
@@ -68,6 +69,7 @@ namespace RpcInternal{
 			if(b) ctx.resolve(RpcInternal::Helpers::Apply::apply(func,argsTuple));
 			return b;
 		}
+		//CallReceiver without FunctionCallContext argument, returning void
 		template<typename FunctionCallContext,typename... Args>
 		bool callDynamicArray(DataInput& data,std::function<void(Args...)> func,const FunctionCallContext& ctx){
 			std::tuple<RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>...> argsTuple;
@@ -81,7 +83,7 @@ namespace RpcInternal{
 			}
 			return b;
 		}
-
+		//CallReceiver with FunctionCallContext argument
 		template<typename FunctionCallContext,typename... Args>
 		bool callDynamicArray(DataInput& data,std::function<void(FunctionCallContext,Args...)> func,const FunctionCallContext& ctx){
 			std::tuple<FunctionCallContext,RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>...> argsTuple;
@@ -91,6 +93,18 @@ namespace RpcInternal{
 				return readDynamicArray(data,args...);
 			},argsTuple);
 			if(b) RpcInternal::Helpers::Apply::apply(RpcInternal::Helpers::ConstRef::removeConstReferenceParameters(func),argsTuple);
+			return b;
+		}
+
+		//MessageFunc
+		template<typename... Args>
+		bool callDynamicArray(DataInput& data,std::function<void(Args...)> func){
+			std::tuple<RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>...> argsTuple;
+
+			bool b=RpcInternal::Helpers::Apply::apply([&data](RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>& ... args){
+				return readDynamicArray(data,args...);
+			},argsTuple);
+			if(b) RpcInternal::Helpers::Apply::apply(func,argsTuple);
 			return b;
 		}
 

@@ -5,10 +5,14 @@ struct DataInput;
 template<typename T>
 struct ReturnType{};
 
-using MethodSignatureTuple=std::tuple<std::vector<String>,String>;
+namespace RpcInternal{
+	using MethodSignatureTuple=std::tuple<std::vector<String>,String>;
+}
+
+
 struct CallReceiver{
 	std::vector<std::function<bool(const FunctionCallContext& ctx,DataInput args)>> callers;
-	std::vector<std::function<MethodSignatureTuple(bool ts)>> signatures;
+	std::vector<std::function<RpcInternal::MethodSignatureTuple(bool ts)>> signatures;
 
 	//Used for lambdas like [](int a){return a+1;}
 	template<typename Func,typename... Args>
@@ -20,12 +24,12 @@ struct CallReceiver{
 	template<typename Func,typename... Args>
 	CallReceiver& add(Func func,nullptr_t returnsVoid,Args... names){return add(func,ReturnType<void>(),names...);};
 
-	
+
 	template<typename T>
 	CallReceiver& smartProperty(T& ref,const std::function<void()>& onChange=nullptr);
 	template<typename T>
 	CallReceiver& getter(T& ref);
-	
+
 	CallReceiver& clear(){
 		callers.clear();
 		signatures.clear();

@@ -19,6 +19,8 @@ void func(const int&){}
 int x;
 RegisteredType type;
 void setup() {
+	Rpc::registerFunction()
+
 	Serial.begin(115200);
 
 	connectWifi();
