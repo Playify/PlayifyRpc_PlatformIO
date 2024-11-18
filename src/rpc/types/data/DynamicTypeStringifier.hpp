@@ -34,7 +34,7 @@ namespace RpcInternal{
 		}
 		template<typename... Args>
 		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<void(FunctionCallContext,Args...)>& func,bool ts){
-			return getMethodSignature(func,ts?"unknown":"object?",getNameArray<sizeof...(Args)>(),ts);
+			return getMethodSignature(func,ts?"unknown":"dynamic?",getNameArray<sizeof...(Args)>(),ts);
 		}
 
 		template<typename... Args,typename Return>

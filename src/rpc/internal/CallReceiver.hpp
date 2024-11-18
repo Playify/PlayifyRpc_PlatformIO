@@ -23,6 +23,8 @@ struct CallReceiver{
 	CallReceiver& add(Func func,ReturnType<Return> returns,Args... names);
 	template<typename Func,typename... Args>
 	CallReceiver& add(Func func,nullptr_t returnsVoid,Args... names){return add(func,ReturnType<void>(),names...);};
+	template<typename Func,typename... Args>
+	CallReceiver& add(Func func,std::pair<const char*,const char*> returns,Args... names);
 
 
 	template<typename T>

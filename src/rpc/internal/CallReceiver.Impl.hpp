@@ -52,6 +52,23 @@ CallReceiver& CallReceiver::add(Func func,ReturnType<Return> returns,Args... nam
 
 
 template<typename Func,typename... Args>
+CallReceiver& CallReceiver::add(Func func,std::pair<const char*,const char*> returns,Args... names){
+	static_assert(sizeof...(names)==RpcInternal::Helpers::MakeFunction::function_traits<Func>::count-1,"Invalid amount of parameter names provided");
+
+	auto function=RpcInternal::Helpers::function(func);
+	std::array<String,sizeof...(names)> array={std::forward<Args>(names)...};
+	callers.push_back([function](const FunctionCallContext& ctx,DataInput args){
+		return RpcInternal::DynamicData::callDynamicArray(args,function,ctx);
+	});
+	signatures.push_back([function,array,returns](bool ts)->RpcInternal::MethodSignatureTuple{
+		return RpcInternal::DynamicData::getMethodSignature(function,ts?returns.first:returns.second,array,ts);
+	});
+	return *this;
+}
+
+
+
+template<typename Func,typename... Args>
 CallReceiver& CallReceiver::func(Func func,Args ...names){
 	static_assert(sizeof...(names)==RpcInternal::Helpers::MakeFunction::function_traits<Func>::count,"Invalid amount of parameter names provided");
 

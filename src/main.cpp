@@ -19,8 +19,6 @@ void func(const int&){}
 int x;
 RegisteredType type;
 void setup() {
-	Rpc::registerFunction()
-
 	Serial.begin(115200);
 
 	connectWifi();
@@ -55,6 +53,18 @@ void setup() {
 			ctx.reject(e);
 		});
 	},ReturnType<nullptr_t>(),"func");
+	
+	type["tuple"].add([](const FunctionCallContext& ctx,RpcFunction func){
+		func.call().then([ctx](DataInput data){
+			Serial.println("Forwarding success");
+			ctx.resolve(data);
+		},[ctx](RpcError e){
+			Serial.println("Forwarding error");
+			e.printStackTrace();
+			ctx.reject(e);
+		});
+	},std::make_pair("TS","C#"),"func");
+	
 
 	type["test"].add([](const FunctionCallContext& ctx){
 		ctx.resolve();
