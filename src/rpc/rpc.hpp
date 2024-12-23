@@ -15,6 +15,7 @@
 #include "internal/helpers.hpp"
 #include "internal/CallReceiver.hpp"
 
+
 struct PendingCall;
 
 namespace RpcInternal{
@@ -75,6 +76,8 @@ using Callback=std::function<void(T t)>;
 
 #include "internal/CallReceiver.Impl.hpp"
 #include "utils/RpcHelpers.hpp"
+
+#include "RpcLogger.hpp"
 
 namespace Rpc{
 	//Rpc

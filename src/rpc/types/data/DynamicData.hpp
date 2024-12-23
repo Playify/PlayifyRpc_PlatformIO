@@ -148,21 +148,29 @@ namespace RpcInternal{
 			static bool read(DataInput& data,int& argCount,String& value){
 				if(argCount==0)return false;
 				int32_t type=data.readLength();
-				if(type=='n'){
-					value=NULL_STRING;
+				if(type<0){
+					type=-type;
+					if(type%4==0){
+						DataInput data2=data.goBack(type/4);
+						return read(data2,argCount,value);
+					}else if((type%4)==1){
+						int32_t count=type/4;
+						uint8_t chars[count+1];
+						data.readFully(chars,count);
+						chars[count]=0;
+						value=String((char*)chars);
+						argCount--;
+						return true;
+					}
+				}else if(type<32){
+					uint8_t chars[type+1];
+					data.readFully(chars,type);
+					chars[type]=0;
+					value=String((char*)chars);
 					argCount--;
 					return true;
-				}
-				if(type<0&&(-type)%4==0){
-					DataInput data2=data.goBack(-type/4);
-					return read(data2,argCount,value);
-				}
-				if(type<0&&((-type)%4)==1){
-					int32_t count=-type/4;
-					uint8_t chars[count+1];
-					data.readFully(chars,count);
-					chars[count]=0;
-					value=String((char*)chars);
+				}else if(type=='n'){
+					value=NULL_STRING;
 					argCount--;
 					return true;
 				}

@@ -47,11 +47,8 @@ namespace TimeHandler{
 	Duration deltaTime;
 
 
-	//counts down to zero, then return true every time or once
-	bool waitZero(Duration& timer,const bool once){
-		if(once&&!timer)
-			return false;
-
+	//counts down to zero, then return true every time
+	bool waitZero(Duration& timer){
 		if(timer>deltaTime){
 			timer-=deltaTime;
 			return false;
@@ -59,6 +56,31 @@ namespace TimeHandler{
 			timer=Duration::zero();
 			return true;
 		}
+	}
+	//counts down to zero, then return true once
+	bool waitZeroOnce(Duration& timer){
+		if(!timer)return false;
+		return waitZero(timer);
+	}
+
+	//counts up to target, then return true every time
+	bool waitReach(Duration& timer,Duration target){
+		auto sum=timer+deltaTime;
+		if(sum<timer){//Overflow
+			timer=Duration::maximum();
+			return true;//must be bigger than target
+		}else if(sum<target){
+			timer=sum;
+			return false;
+		}else{
+			timer=target;
+			return true;
+		}
+	}
+	//counts up to target, then return true once
+	bool waitReachOnce(Duration& timer,Duration target){
+		if(timer>=target)return false;
+		return waitReach(timer,target);
 	}
 
 	bool cyclicEvent(Duration& timer,Duration duration){
