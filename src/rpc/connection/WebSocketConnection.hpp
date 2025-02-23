@@ -53,6 +53,7 @@ namespace RpcInternal{
 			lastTime+=deltaTime;
 
 			if(_disconnect){
+				_disconnect=false;
 				webSocket.disconnect();
 			}
 

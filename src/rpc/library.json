@@ -1,7 +1,7 @@
 {
 	"$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
 	"name": "playify-rpc",
-	"version": "1.9.0",
+	"version": "1.9.1",
 	"description": "Playify RPC Client",
 	"keywords": "rpc",
 	"repository":{
