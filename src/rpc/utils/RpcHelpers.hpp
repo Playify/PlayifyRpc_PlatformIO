@@ -1,7 +1,7 @@
 #include <functional>
 
 namespace RpcHelpers{
-	void callDelayed(int delayMillis,std::function<void()> callback){
+	void callDelayed(unsigned int delayMillis,std::function<void()> callback){
 		auto startTime=millis();
 		Rpc::addOnLoop([delayMillis,startTime,callback](){
 			if(millis()-startTime<delayMillis)return false;

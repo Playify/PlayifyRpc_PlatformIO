@@ -121,6 +121,21 @@ namespace WebDebugger{
 		if(i==-1)return "Unknown command: "+cmd;
 		String pinString=cmd.substring(0,i);
 		String value=cmd.substring(i+1);
+		
+#ifndef ESP32
+		if(pinString=="AFREQ"){
+			analogWriteFreq(value.toInt());
+			return String("analogWriteFreq(")+value.toInt()+")";
+		}
+		if(pinString=="ARANGE"){
+			analogWriteRange(value.toInt());
+			return String("analogWriteRange(")+value.toInt()+")";
+		}
+#endif
+		if(pinString=="ARES"){
+			analogWriteResolution(value.toInt());
+			return String("analogWriteResolution(")+value.toInt()+")";
+		}
 
 
 		if(tryGetPin(pinString,pin)){
@@ -137,18 +152,18 @@ namespace WebDebugger{
 #endif
 
 
-			if(value==""||value=="!"||value=="t"||value=="toggle"){
+			if(value==""||value=="!"||value=="T"||value=="TOGGLE"){
 				bool toggle=!digitalRead(pin);
 				pinMode(pin,OUTPUT);
 				digitalWrite(pin,toggle);
 				return pinString+" ("+pin+") toggled to "+toggle;
 			}
-			if(value=="1"||value=="HIGH"||value=="high"){
+			if(value=="1"||value=="H"||value=="HIGH"){
 				pinMode(pin,OUTPUT);
 				digitalWrite(pin,HIGH);
 				return pinString+" ("+pin+") set to 1";
 			}
-			if(value=="0"||value=="LOW"||value=="low"){
+			if(value=="0"||value=="L"||value=="LOW"){
 				pinMode(pin,OUTPUT);
 				digitalWrite(pin,LOW);
 				return pinString+" ("+pin+") set to 0";
@@ -177,6 +192,12 @@ namespace WebDebugger{
 				return pinString+" ("+pin+") configured to INPUT_PULLDOWN";
 			}
 #endif
+			if(value[0]=='A'){
+				auto v=value.substring(1).toInt();
+				pinMode(pin,OUTPUT);
+				analogWrite(pin,v);
+				return pinString+" ("+pin+") set to analog "+v;
+			}
 		}
 		return "Unknown command: "+cmd;
 	}

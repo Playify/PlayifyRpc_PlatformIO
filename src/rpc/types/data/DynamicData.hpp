@@ -140,7 +140,7 @@ namespace RpcInternal{
 		NUMBER_TYPE(float,'d',writeDouble,"number","float")
 		NUMBER_TYPE(double,'d',writeDouble,"number","double")
 #undef NUMBER_TYPE
-//endregion								\
+		//endregion
 
 
 		template<>
