@@ -6,7 +6,7 @@ namespace RpcInternal{
 	}
 	
 	template<typename... Args>
-	PendingCall callRemoteFunction(String type,String method,Args... args){
+	PendingCall callRemoteFunction(const String& type,const String& method,Args... args){
 		//Intentionally no check for local functions, as this is for microcontrollers, they shouldn't do any shinanigans with calling own functions
 		/*auto it=RegisteredTypes::registered.find(type);
 		if(it!=RegisteredTypes::registered.end()){}*/
@@ -34,7 +34,7 @@ namespace RpcInternal{
 	}
 	
 	
-	void getMethodSignatures(const FunctionCallContext& fcc,const RegisteredType invoker,const String type,String method,bool ts){
+	void getMethodSignatures(const FunctionCallContext& fcc,const RegisteredType& invoker,const String& type,const String& method,bool ts){//TODO implement other languages
 		const auto& methodIterator=invoker.find(method);
 		if(methodIterator==invoker.end()){
 			fcc.reject(RpcMethodNotFoundError(type,method));

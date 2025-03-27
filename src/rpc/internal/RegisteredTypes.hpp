@@ -37,13 +37,13 @@ namespace RpcInternal{
 		}
 
 		RegisteredType* registerType(const String& type){
-			auto map=new RegisteredType();
+			const auto map=new RegisteredType();
 			registerType(type,map,true);
 			return map;
 		}
 
 		void unregisterType(const String& type){
-			auto it=registered.find(type);
+			const auto it=registered.find(type);
 			if(it==registered.end()) return;
 
 			if(RpcConnection::connected)

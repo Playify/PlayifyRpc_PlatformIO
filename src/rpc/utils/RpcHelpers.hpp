@@ -1,9 +1,8 @@
 #include <functional>
 
 namespace RpcHelpers{
-	void callDelayed(unsigned int delayMillis,std::function<void()> callback){
-		auto startTime=millis();
-		Rpc::addOnLoop([delayMillis,startTime,callback](){
+	void callDelayed(unsigned int delayMillis,const std::function<void()>& callback){
+		Rpc::addOnLoop([delayMillis,startTime=millis(),callback]{
 			if(millis()-startTime<delayMillis)return false;
 			callback();
 			return true;
@@ -16,11 +15,11 @@ namespace RpcHelpers{
 		auto call=RpcInternal::callRemoteFunction(type,method,args...);
 		call.setMessageListener(onMessage);
 		
-		std::function<void()> recall=[=](){
+		std::function<void()> recall=[=]{
 			autoRecall(onMessage,onError,type,method,args...);
 		};
 		
-		call.finally([onError,recall](bool b){
+		call.finally([onError,recall](const bool b){
 			if(onError)onError(b);
 			callDelayed(1000,recall);
 		});

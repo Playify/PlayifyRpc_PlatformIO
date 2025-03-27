@@ -13,7 +13,7 @@ namespace RpcInternal{
 
 		const char* hex="0123456789ABCDEF";
 
-		String urlEncode(String toEncode){
+		String urlEncode(const String& toEncode){
 			char* output=(char*)((malloc(3*toEncode.length()+1)));
 
 			size_t j=0;
@@ -103,10 +103,10 @@ namespace RpcInternal{
 			for(const auto& item:currentlyExecuting)item.second->cancelSelf();
 		}
 
-		void callMeta(const FunctionCallContext& fcc,const RegisteredType& invoker,DataInput input,const String& string);
+		void callMeta(const FunctionCallContext& fcc,const RegisteredType& invoker,DataInput input,const String& type);
 
 		void receiveRpc(DataInput data){
-			auto packetType=PacketType(data.readByte());
+			const auto packetType=PacketType(data.readByte());
 
 			switch(packetType){
 				case FunctionCall:{

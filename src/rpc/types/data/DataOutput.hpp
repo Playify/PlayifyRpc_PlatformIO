@@ -11,7 +11,7 @@ public:
 	//DataOutput& operator=(const DataOutput&) = delete; // non copyable
 
 private:
-	void writeReverse(uint8_t* buf, uint16_t len){insert(end(),std::reverse_iterator<uint8_t*>(buf+len),std::reverse_iterator<uint8_t*>(buf));}
+	void writeReverse(uint8_t* buf,const uint16_t len){insert(end(),std::reverse_iterator<uint8_t*>(buf+len),std::reverse_iterator<uint8_t*>(buf));}
 
 public:
 
@@ -21,7 +21,7 @@ public:
 	using vector::begin;
 	using vector::end;
 
-	void write(uint8_t* buf, uint16_t off, uint16_t len){insert(end(),buf+off,buf+off+len);}
+	void write(uint8_t* buf,const uint16_t off,const uint16_t len){insert(end(),buf+off,buf+off+len);}
 
 	void write(uint8_t* buf, uint16_t len){insert(end(),buf,buf+len);}
 

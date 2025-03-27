@@ -42,7 +42,7 @@ void setup() {
 
 		ctx.resolve(result);
 	},ReturnType<String>(),"args");
-	type["call"].add([](const FunctionCallContext& ctx,RpcFunction func){
+	type["call"].add([](const FunctionCallContext& ctx,const RpcFunction& func){
 
 		func.call().then([ctx](DataInput data){
 			Serial.println("Forwarding success");
@@ -54,7 +54,7 @@ void setup() {
 		});
 	},ReturnType<nullptr_t>(),"func");
 	
-	type["tuple"].add([](const FunctionCallContext& ctx,RpcFunction func){
+	type["tuple"].add([](const FunctionCallContext& ctx,const RpcFunction& func){
 		func.call().then([ctx](DataInput data){
 			Serial.println("Forwarding success");
 			ctx.resolve(data);

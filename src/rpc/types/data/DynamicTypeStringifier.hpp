@@ -23,7 +23,7 @@ namespace RpcInternal{
 		}
 		
 		template<typename... Args>
-		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<void(FunctionCallContext,Args...)>&,String returns,std::array<String,sizeof...(Args)> names,bool ts){
+		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<void(FunctionCallContext,Args...)>&,const String& returns,std::array<String,sizeof...(Args)> names,bool ts){
 			auto parameters=std::vector<String>();
 			getTypeNames<void,Args...>(parameters,ts,names.data(),names.size(),0);
 			return std::make_tuple(parameters,returns);
