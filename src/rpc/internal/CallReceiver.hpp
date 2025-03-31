@@ -12,7 +12,7 @@ namespace RpcInternal{
 
 struct CallReceiver{
 	std::vector<std::function<bool(const FunctionCallContext& ctx,DataInput args)>> callers;
-	std::vector<std::function<RpcInternal::MethodSignatureTuple(bool ts)>> signatures;
+	std::vector<std::function<RpcInternal::MethodSignatureTuple(ProgrammingLanguage lang)>> signatures;
 
 	//Used for lambdas like [](int a){return a+1;}
 	template<typename Func,typename... Args>

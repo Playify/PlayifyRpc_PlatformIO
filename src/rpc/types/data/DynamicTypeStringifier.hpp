@@ -23,29 +23,31 @@ namespace RpcInternal{
 		}
 		
 		template<typename... Args>
-		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<void(FunctionCallContext,Args...)>&,String returns,std::array<String,sizeof...(Args)> names,bool ts){
+		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<void(FunctionCallContext,Args...)>&,String returns,std::array<String,sizeof...(Args)> names,ProgrammingLanguage lang){
 			auto parameters=std::vector<String>();
-			getTypeNames<void,Args...>(parameters,ts,names.data(),names.size(),0);
+			if(lang==ProgrammingLanguage::JavaScript) parameters.insert(parameters.end(),names.begin(),names.end());
+			else getTypeNames<void,Args...>(parameters,lang!=ProgrammingLanguage::CSharp,names.data(),names.size(),0);
 			return std::make_tuple(parameters,returns);
 		}
 		template<typename... Args,typename Return>
-		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<void(FunctionCallContext,Args...)>& func,ReturnType<Return>,std::array<String,sizeof...(Args)> names,bool ts){
-			return getMethodSignature(func,TypeDefinition<Return>::getTypeName(ts),names,ts);
+		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<void(FunctionCallContext,Args...)>& func,ReturnType<Return>,std::array<String,sizeof...(Args)> names,ProgrammingLanguage lang){
+			return getMethodSignature(func,TypeDefinition<Return>::getTypeName(lang!=ProgrammingLanguage::CSharp),names,lang);
 		}
 		template<typename... Args>
-		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<void(FunctionCallContext,Args...)>& func,bool ts){
-			return getMethodSignature(func,ts?"unknown":"dynamic?",getNameArray<sizeof...(Args)>(),ts);
+		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<void(FunctionCallContext,Args...)>& func,ProgrammingLanguage lang){
+			return getMethodSignature(func,lang!=ProgrammingLanguage::CSharp?"unknown":"dynamic?",getNameArray<sizeof...(Args)>(),lang);
 		}
 
 		template<typename... Args,typename Return>
-		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<Return(Args...)>&,std::array<String,sizeof...(Args)> names,bool ts){
+		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<Return(Args...)>&,std::array<String,sizeof...(Args)> names,ProgrammingLanguage lang){
 			auto parameters=std::vector<String>();
-			getTypeNames<void,Args...>(parameters,ts,names.data(),names.size(),0);
-			return std::make_tuple(parameters,TypeDefinition<Return>::getTypeName(ts));
+			if(lang==ProgrammingLanguage::JavaScript) parameters.insert(parameters.end(),names.begin(),names.end());
+			else getTypeNames<void,Args...>(parameters,lang!=ProgrammingLanguage::CSharp,names.data(),names.size(),0);
+			return std::make_tuple(parameters,TypeDefinition<Return>::getTypeName(lang!=ProgrammingLanguage::CSharp));
 		}
 		template<typename... Args,typename Return>
-		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<Return(Args...)>& func,bool ts){
-			return getMethodSignature(func,getNameArray<sizeof...(Args)>(),ts);
+		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<Return(Args...)>& func,ProgrammingLanguage lang){
+			return getMethodSignature(func,getNameArray<sizeof...(Args)>(),lang);
 		}
 	}
 }

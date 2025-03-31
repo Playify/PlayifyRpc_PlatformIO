@@ -12,6 +12,14 @@
 #include "ESP8266WiFi.h"
 #endif
 
+
+
+enum ProgrammingLanguage{
+	CSharp,
+	TypeScript,
+	JavaScript,
+};
+
 #include "internal/helpers.hpp"
 #include "internal/CallReceiver.hpp"
 

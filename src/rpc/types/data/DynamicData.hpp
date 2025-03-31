@@ -328,6 +328,76 @@ namespace RpcInternal{
 			}
 		};
 
+		template<>
+		struct TypeDefinition<ProgrammingLanguage>{
+			static bool read(DataInput& data,int& argCount,ProgrammingLanguage& value){
+				if(argCount==0)return false;
+				int32_t type=data.readLength();
+				
+				if(type=='t'){
+					value=ProgrammingLanguage::TypeScript;
+					argCount--;
+					return true;
+				}
+				if(type=='f'){
+					value=ProgrammingLanguage::CSharp;
+					argCount--;
+					return true;
+				}
+				if(type=='i'){
+					value=ProgrammingLanguage(data.readInt());
+					argCount--;
+					return true;
+				}
+				
+				String s;
+
+				if(type<0){
+					type=-type;
+					if(type%4==0){
+						DataInput data2=data.goBack(type/4);
+						return read(data2,argCount,value);
+					}else if((type%4)==1){
+						int32_t count=type/4;
+						uint8_t chars[count+1];
+						data.readFully(chars,count);
+						chars[count]=0;
+						s=String((char*)chars);
+					}
+				}else if(type<32){
+					uint8_t chars[type+1];
+					data.readFully(chars,type);
+					chars[type]=0;
+					s=String((char*)chars);
+				}else return false;
+
+				s.toLowerCase();
+				if(s=="cs"||s=="c#"){
+					value=ProgrammingLanguage::CSharp;
+					argCount--;
+					return true;
+				}
+				if(s=="ts"||s=="typescript"){
+					value=ProgrammingLanguage::TypeScript;
+					argCount--;
+					return true;
+				}
+				if(s=="js"||s=="javascript"||"jsdoc"){
+					value=ProgrammingLanguage::JavaScript;
+					argCount--;
+					return true;
+				}
+				return false;
+			}
+			static void writeDynamic(DataOutput& data,ProgrammingLanguage value){
+				data.writeLength('i');
+				data.writeInt(value);
+			}
+			static String getTypeName(bool ts){
+				return "ProgrammingLanguage";
+			}
+		};
+
 		template<typename T,typename... Rest>
 		struct TypeDefinition<std::vector<T,Rest...>>{
 			static bool read(DataInput& data,int& argCount,std::vector<T,Rest...>& value){

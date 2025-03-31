@@ -186,7 +186,7 @@ namespace RpcInternal{
 		void callMeta(const FunctionCallContext& fcc,const RegisteredType& invoker,DataInput input,const String& type){
 			String meta;
 			String method;
-			bool ts;
+			ProgrammingLanguage lang;
 			if(input.tryGetArgs(meta)){
 				if(meta=="M"){
 					std::vector<String> methods(invoker.size());
@@ -197,14 +197,14 @@ namespace RpcInternal{
 				}else if(meta=="V"){
 					fcc.resolve(String(getRpcVersion()+" C++"));
 				}
-			}else if(input.tryGetArgs(meta,method,ts)){
+			}else if(input.tryGetArgs(meta,method,lang)){
 				if(meta=="S"){
-					getMethodSignatures(fcc,invoker,type,method,ts);
+					getMethodSignatures(fcc,invoker,type,method,lang);
 					return;
 				}
 			}else if(input.tryGetArgs(meta,method)){
 				if(meta=="S"){
-					getMethodSignatures(fcc,invoker,type,method,false);
+					getMethodSignatures(fcc,invoker,type,method,ProgrammingLanguage::CSharp);
 					return;
 				}
 			}else if(input.readLength()==0||!RpcInternal::DynamicData::readDynamic(input,meta)){

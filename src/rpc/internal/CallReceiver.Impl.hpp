@@ -44,8 +44,8 @@ CallReceiver& CallReceiver::add(Func func,ReturnType<Return> returns,Args... nam
 	callers.push_back([function](const FunctionCallContext& ctx,DataInput args){
 		return RpcInternal::DynamicData::callDynamicArray(args,function,ctx);
 	});
-	signatures.push_back([function,array,returns](bool ts)->RpcInternal::MethodSignatureTuple{
-		return RpcInternal::DynamicData::getMethodSignature(function,returns,array,ts);
+	signatures.push_back([function,array,returns](ProgrammingLanguage lang)->RpcInternal::MethodSignatureTuple{
+		return RpcInternal::DynamicData::getMethodSignature(function,returns,array,lang);
 	});
 	return *this;
 }
@@ -60,8 +60,8 @@ CallReceiver& CallReceiver::add(Func func,std::pair<const char*,const char*> ret
 	callers.push_back([function](const FunctionCallContext& ctx,DataInput args){
 		return RpcInternal::DynamicData::callDynamicArray(args,function,ctx);
 	});
-	signatures.push_back([function,array,returns](bool ts)->RpcInternal::MethodSignatureTuple{
-		return RpcInternal::DynamicData::getMethodSignature(function,ts?returns.first:returns.second,array,ts);
+	signatures.push_back([function,array,returns](ProgrammingLanguage lang)->RpcInternal::MethodSignatureTuple{
+		return RpcInternal::DynamicData::getMethodSignature(function,lang!=ProgrammingLanguage::CSharp?returns.first:returns.second,array,lang);
 	});
 	return *this;
 }
@@ -77,8 +77,8 @@ CallReceiver& CallReceiver::func(Func func,Args ...names){
 	callers.push_back([function](const FunctionCallContext& ctx,DataInput args){
 		return RpcInternal::DynamicData::callDynamicArray(args,function,ctx);
 	});
-	signatures.push_back([function,array](bool ts)->RpcInternal::MethodSignatureTuple{
-		return RpcInternal::DynamicData::getMethodSignature(function,array,ts);
+	signatures.push_back([function,array](ProgrammingLanguage lang)->RpcInternal::MethodSignatureTuple{
+		return RpcInternal::DynamicData::getMethodSignature(function,array,lang);
 	});
 	return *this;
 }
