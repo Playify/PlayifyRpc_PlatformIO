@@ -18,7 +18,7 @@ namespace RpcInternal{
 		namespace MakeFunction{
 
 			template<typename T>
-			struct function_traits:public function_traits<decltype(&T::operator ())>{
+			struct function_traits:function_traits<decltype(&T::operator ())>{
 				// For generic types that are functors, delegate to its 'operator()'
 			};
 
@@ -51,7 +51,7 @@ namespace RpcInternal{
 
 
 			template<typename L>
-			typename function_traits<L>::type make_function(L l){ return (typename function_traits<L>::type)(l); }
+			typename function_traits<L>::type make_function(L l){ return (typename function_traits<L>::type)l; }
 			
 			template<typename ReturnType,typename... Args,class T>//handles bind & multiple function call operator()'s
 			auto make_function(T&& t)->std::function<decltype(ReturnType(t(std::declval<Args>()...)))(Args...)>{ return {std::forward<T>(t)}; }
@@ -104,7 +104,7 @@ namespace RpcInternal{
 			template<size_t N>
 			struct Apply{
 				template<typename F,typename T,typename... A>
-				static inline auto
+				static auto
 				apply(F&& f,T&& t,A&& ... a)->decltype(Apply<N-1>::apply(std::forward<F>(f),std::forward<T>(t),
 																		 std::get<N-1>(std::forward<T>(t)),
 																		 std::forward<A>(a)...)){
@@ -116,13 +116,13 @@ namespace RpcInternal{
 			template<>
 			struct Apply<0>{
 				template<typename F,typename T,typename... A>
-				static inline auto apply(F&& f,T&&,A&& ... a)->decltype(std::forward<F>(f)(std::forward<A>(a)...)){
+				static auto apply(F&& f,T&&,A&& ... a)->decltype(std::forward<F>(f)(std::forward<A>(a)...)){
 					return std::forward<F>(f)(std::forward<A>(a)...);
 				}
 			};
 
 			template<typename F,typename T>
-			inline auto apply(F&& f,T&& t)->decltype(Apply<std::tuple_size<typename std::decay<T>::type>::value>::apply(
+			auto apply(F&& f,T&& t)->decltype(Apply<std::tuple_size<typename std::decay<T>::type>::value>::apply(
 					std::forward<F>(f),std::forward<T>(t))){
 				return Apply<std::tuple_size<typename std::decay<T>::type>::value>::apply(std::forward<F>(f),
 																						  std::forward<T>(t));

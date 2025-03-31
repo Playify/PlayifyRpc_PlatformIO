@@ -1,3 +1,5 @@
+#include <utility>
+
 
 struct FunctionCallContext{
 
@@ -9,8 +11,8 @@ struct FunctionCallContext{
 
 		explicit Shared(int32_t callId,String type,String method):
 		callId(callId),
-		type(type),
-		method(method)
+		type(std::move(type)),
+		method(std::move(method))
 		{}
 
 		bool isCancelled=false;
@@ -21,7 +23,7 @@ struct FunctionCallContext{
 		void setMessageListener(RpcInternal::MessageFunc func){
 			listener=std::move(func);
 		}
-		void doReceive(DataInput data) const{
+		void doReceive(const DataInput& data) const{
 			if(listener==nullptr){
 				Serial.println("[Rpc] Error while receiving message: No listener is defined");
 				return;
@@ -39,12 +41,13 @@ struct FunctionCallContext{
 		}
 	};
 
-	std::shared_ptr<FunctionCallContext::Shared> _data;
+	std::shared_ptr<Shared> _data;
 
-	constexpr FunctionCallContext():_data(){}
-	constexpr FunctionCallContext(nullptr_t):_data(){}
+	constexpr FunctionCallContext()= default;
+	// ReSharper disable once CppNonExplicitConvertingConstructor
+	constexpr FunctionCallContext(nullptr_t){} // NOLINT(*-explicit-constructor)
 
-	explicit FunctionCallContext(const std::shared_ptr<FunctionCallContext::Shared>& data):_data(data){}
+	explicit FunctionCallContext(const std::shared_ptr<Shared>& data):_data(data){}
 
 	[[nodiscard]] bool isFinished() const{
 		return !_data||_data->isFinished;
@@ -84,9 +87,9 @@ struct FunctionCallContext{
 		_data->setMessageListener(RpcInternal::make_messageFunc(func));
 	}
 
-	void getCaller(std::function<void(String)> func) const{
+	void getCaller(const std::function<void(String)>& func) const{
 		if(!_data) func(NULL_STRING);
-		else RpcInternal::callRemoteFunction(NULL_STRING,"c",_data->callId).then(func,[func](const RpcError& err){
+		else RpcInternal::callRemoteFunction(NULL_STRING,"c",_data->callId).then(func,[func](const RpcError&){
 			func(NULL_STRING);
 		});
 	}

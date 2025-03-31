@@ -9,7 +9,7 @@ struct RpcError{
 	String message;
 	String stackTrace;
 	String jsonData;
-public:
+
 	explicit RpcError(const char* msg):
 			type("RpcError"),
 			from(Rpc::prettyName()),
@@ -51,8 +51,8 @@ public:
 		return result;
 	}
 	
-	RpcError append(String s) const{
-		auto index=stackTrace.indexOf("\ncaused by:");
+	RpcError append(const String& s) const{
+		const auto index=stackTrace.indexOf("\ncaused by:");
 		
 		String trace;
 		if(index==-1) trace=stackTrace+"\n\trpc "+s;

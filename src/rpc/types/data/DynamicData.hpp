@@ -177,7 +177,8 @@ namespace RpcInternal{
 				return false;
 			}
 			static void writeDynamic(DataOutput& data,String value){
-				data.writeLength(-(value.length()*4+1));
+				const int32_t length=value.length();
+				data.writeLength(length<32?length:-(length*4+1));
 				data.insert(data.end(),value.begin(),value.end());
 			}
 			static String getTypeName(bool){
@@ -192,8 +193,8 @@ namespace RpcInternal{
 				return false;
 			}
 			static void writeDynamic(DataOutput& data,const char* value){
-				auto len=strlen(value);
-				data.writeLength(-(len*4+1));
+				const int32_t len=strlen(value);
+				data.writeLength(len<32?len:-(len*4+1));
 				data.write((uint8_t*)value,len);
 			}
 			static String getTypeName(bool){
@@ -207,7 +208,7 @@ namespace RpcInternal{
 		struct TypeDefinition<RpcError>{
 			static bool read(DataInput& data,int& argCount,RpcError& value){
 				if(argCount==0)return false;
-				int32_t type=data.readLength();
+				const int32_t type=data.readLength();
 
 				if(type<0&&(-type)%4==0){
 					DataInput data2=data.goBack(-type/4);
@@ -221,7 +222,7 @@ namespace RpcInternal{
 				}
 				return false;
 			}
-			static void writeDynamic(DataOutput& data,RpcError value){
+			static void writeDynamic(DataOutput& data,const RpcError& value){
 				data.writeLength('E');
 				data.writeError(value);
 			}
@@ -234,7 +235,7 @@ namespace RpcInternal{
 		struct TypeDefinition<RpcObject>{
 			static bool read(DataInput& data,int& argCount,RpcObject& value){
 				if(argCount==0)return false;
-				int32_t type=data.readLength();
+				const int32_t type=data.readLength();
 
 				if(type<0&&(-type)%4==0){
 					DataInput data2=data.goBack(-type/4);
@@ -248,7 +249,7 @@ namespace RpcInternal{
 				}
 				return false;
 			}
-			static void writeDynamic(DataOutput& data,RpcObject value){
+			static void writeDynamic(DataOutput& data,const RpcObject& value){
 				data.writeLength('O');
 				data.writeString(value.type);
 			}
@@ -261,7 +262,7 @@ namespace RpcInternal{
 		struct TypeDefinition<RpcFunction>{
 			static bool read(DataInput& data,int& argCount,RpcFunction& value){
 				if(argCount==0)return false;
-				int32_t type=data.readLength();
+				const int32_t type=data.readLength();
 
 				if(type<0&&(-type)%4==0){
 					DataInput data2=data.goBack(-type/4);
@@ -275,7 +276,7 @@ namespace RpcInternal{
 				}
 				return false;
 			}
-			static void writeDynamic(DataOutput& data,RpcFunction value){
+			static void writeDynamic(DataOutput& data,const RpcFunction& value){
 				data.writeLength('F');
 				data.writeString(value.type);
 				data.writeString(value.method);

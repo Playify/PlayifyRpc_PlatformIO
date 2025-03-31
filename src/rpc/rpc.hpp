@@ -28,7 +28,7 @@ struct PendingCall;
 
 namespace RpcInternal{
 	template<typename... Args>
-	PendingCall callRemoteFunction(String type,String method,Args... args);
+	PendingCall callRemoteFunction(const String& type,const String& method,Args... args);
 
 
 	using MessageFunc=std::function<void(DataInput rawData)>;
@@ -48,7 +48,7 @@ namespace Rpc{
 
 
 	//Will be called on loop(), when returning true, the function gets removed
-	void addOnLoop(std::function<bool()> func){
+	void addOnLoop(const std::function<bool()>& func){
 		RpcInternal::onLoopCallbacks.push_back(func);
 	}
 }
@@ -102,7 +102,7 @@ namespace Rpc{
 	}
 
 	//Connection
-	void setup(const String& rpcToken,const String& host,uint16_t port,const String& path="/rpc"){
+	void setup(const String& rpcToken,const String& host,const uint16_t port,const String& path="/rpc"){
 		id=String("esp@")+WiFi.getHostname()+"@"+WiFi.macAddress();
 		RpcInternal::RpcConnection::setup(rpcToken,host,port,path);
 		RpcInternal::RegisteredTypes::setup();
@@ -124,21 +124,21 @@ namespace Rpc{
 	RpcFunction createFunction(String type,String method){ return RpcFunction(std::move(type),std::move(method)); }
 
 	RpcFunction registerFunction(CallReceiver func){
-		String method(RpcInternal::RegisteredTypes::nextFunctionId++);
+		const String method(RpcInternal::RegisteredTypes::nextFunctionId++);
 		RpcInternal::RegisteredTypes::registeredFunctions[method]=std::move(func);
 		return RpcFunction("$"+id,method);
 	}
 
 	void unregisterFunction(const RpcFunction& func){
-		if(func.type!=("$"+id))return;
+		if(func.type!="$"+id)return;
 		RpcInternal::RegisteredTypes::registeredFunctions.erase(func.method);
 	}
 
 	//callLocal not supported
 
 	template<typename... Args>
-	PendingCall callFunction(String type,String method,Args... args){
-		return RpcInternal::callRemoteFunction(type,method,args...);
+	PendingCall callFunction(const String& type,const String& method,Args... args){
+		return RpcInternal::callRemoteFunction(type,method,std::move(args)...);
 	}
 
 	//Types
@@ -154,8 +154,8 @@ namespace Rpc{
 		uuid_int[2] = RANDOM_REG32;
 		uuid_int[3] = RANDOM_REG32;
 #endif
-		for(uint8_t i=0;i<sizeof(uuid);i++)uuid[i]=possible[uuid[i]&63];
-		return "$"+Rpc::id+"$"+String(uuid);
+		for(char & i : uuid)i=possible[i&63];
+		return "$"+id+"$"+String(uuid);
 	}
 
 	RegisteredType* registerType(const String& type){ return RpcInternal::RegisteredTypes::registerType(type); }
@@ -165,7 +165,7 @@ namespace Rpc{
 	void registerType(const String& type,RegisteredType& map){ RpcInternal::RegisteredTypes::registerType(type,&map); }
 
 	String registerType(RegisteredType& map){
-		String type=Rpc::generateTypeName();
+		String type=generateTypeName();
 		RpcInternal::RegisteredTypes::registerType(type,&map);
 		return type;
 	}
@@ -181,7 +181,7 @@ namespace Rpc{
 	}
 
 	void checkType(const String& type,const Callback<bool>& callback){
-		checkTypes(std::vector<String>(1,type),Callback<int32_t>([callback](int32_t n){
+		checkTypes(std::vector<String>(1,type),Callback<int32_t>([callback](const int32_t n){
 			callback(n>0);
 		}));
 	}
@@ -204,14 +204,14 @@ namespace Rpc{
 		});
 	}
 
-	void evalString(String expression,const Callback<String>& callback){
+	void evalString(const String& expression,const Callback<String>& callback){
 		callFunction("Rpc","evalString",expression).then(callback,[callback](const RpcError& e){
 			callback(e.getStackTrace());
 		});
 	}
 
 	template<typename T>
-	void evalObject(String expression,const Callback<T>& callback,const Callback<RpcError> onError){
+	void evalObject(const String& expression,const Callback<T>& callback,const Callback<RpcError> onError){
 		callFunction("Rpc","evalObject",expression).then(callback,onError);
 	}
 

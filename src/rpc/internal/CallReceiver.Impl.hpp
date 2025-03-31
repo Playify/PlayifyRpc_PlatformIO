@@ -3,7 +3,7 @@
 
 template<typename T>
 CallReceiver& CallReceiver::smartProperty(T& ref,const std::function<void()>& onChange){
-	func([&ref](){return ref;});
+	func([&ref]{return ref;});
 	func([&ref,onChange](T value){
 		ref=value;
 		if(onChange)onChange();
@@ -14,8 +14,8 @@ CallReceiver& CallReceiver::smartProperty(T& ref,const std::function<void()>& on
 
 template<>
 CallReceiver& CallReceiver::smartProperty(bool& ref,const std::function<void()>& onChange){
-	func([&ref](){return ref;});
-	func([&ref,onChange](bool value){
+	func([&ref]{return ref;});
+	func([&ref,onChange](const bool value){
 		ref=value;
 		if(onChange)onChange();
 		return ref;
@@ -30,7 +30,7 @@ CallReceiver& CallReceiver::smartProperty(bool& ref,const std::function<void()>&
 
 template<typename T>
 CallReceiver& CallReceiver::getter(T& ref){
-	return func([&ref](){return ref;});
+	return func([&ref]{return ref;});
 }
 
 
@@ -86,9 +86,9 @@ CallReceiver& CallReceiver::func(Func func,Args ...names){
 
 template<typename T>
 RpcInternal::MessageFunc RpcInternal::make_messageFunc(T func){
-	auto function=RpcInternal::Helpers::function(func);
+	auto function=Helpers::function(func);
 	return [function](DataInput data){
-		if(!RpcInternal::DynamicData::callDynamicArray(data,function))
+		if(!DynamicData::callDynamicArray(data,function))
 			Serial.println("[Rpc] Error while receiving message: Arguments do not match the receiver");
 	};
 }

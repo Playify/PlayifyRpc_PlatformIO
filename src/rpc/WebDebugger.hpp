@@ -1,5 +1,3 @@
-#include <utility>
-
 #include "Arduino.h"
 
 #if ESP32
@@ -29,7 +27,7 @@ namespace WebDebugger{
 	bool _tryParse(const String& s,uint8_t& pin){
 		if(!s)return false;
 
-		for(char i:s)
+		for(const char i:s)
 			if(!isDigit(i))
 				return false;
 
@@ -117,7 +115,7 @@ namespace WebDebugger{
 
 
 		//setter command
-		int i=cmd.indexOf('=');
+		const int i=cmd.indexOf('=');
 		if(i==-1)return "Unknown command: "+cmd;
 		String pinString=cmd.substring(0,i);
 		String value=cmd.substring(i+1);
@@ -141,13 +139,12 @@ namespace WebDebugger{
 		if(tryGetPin(pinString,pin)){
 #if SOC_DAC_PERIPH_NUM>0
 			if(pinString.startsWith("DAC")){
-				if(value.length()){
-					dacWrite(DAC1,value.toInt());
-					return pinString+" ("+pin+") set to "+value.toInt()+" (analog)";
-				}else{
+				if(!value.length()){
 					dacDisable(DAC1);
 					return pinString+" ("+pin+") set to disabled (analog)";
 				}
+				dacWrite(DAC1,value.toInt());
+				return pinString+" ("+pin+") set to "+value.toInt()+" (analog)";
 			}
 #endif
 
@@ -193,7 +190,7 @@ namespace WebDebugger{
 			}
 #endif
 			if(value[0]=='A'){
-				auto v=value.substring(1).toInt();
+				const auto v=value.substring(1).toInt();
 				pinMode(pin,OUTPUT);
 				analogWrite(pin,v);
 				return pinString+" ("+pin+") set to analog "+v;
@@ -210,7 +207,7 @@ namespace WebDebugger{
 	void loop(bool serial=true){
 		do{
 			while(serial&&Serial.available()){
-				auto c=char(Serial.read());
+				const auto c=char(Serial.read());
 				if(c=='\b')_currSerialCommand=_currSerialCommand.substring(0,_currSerialCommand.length()-1);
 				else if(c!='\n')_currSerialCommand+=c;
 				else{
@@ -259,6 +256,7 @@ namespace WebDebugger{
 				}
 			}
 			yield();
+			// ReSharper disable once CppDFALoopConditionNotUpdated
 		}while(_locked);
 	}
 }

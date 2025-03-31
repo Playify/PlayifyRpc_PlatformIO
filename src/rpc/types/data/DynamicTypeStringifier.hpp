@@ -23,7 +23,7 @@ namespace RpcInternal{
 		}
 		
 		template<typename... Args>
-		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<void(FunctionCallContext,Args...)>&,String returns,std::array<String,sizeof...(Args)> names,ProgrammingLanguage lang){
+		std::tuple<std::vector<String>,String> getMethodSignature(const std::function<void(FunctionCallContext,Args...)>&,const String& returns,std::array<String,sizeof...(Args)> names,ProgrammingLanguage lang){
 			auto parameters=std::vector<String>();
 			if(lang==ProgrammingLanguage::JavaScript) parameters.insert(parameters.end(),names.begin(),names.end());
 			else getTypeNames<void,Args...>(parameters,lang!=ProgrammingLanguage::CSharp,names.data(),names.size(),0);

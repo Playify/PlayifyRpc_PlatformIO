@@ -22,7 +22,7 @@ namespace RpcInternal{
 
 
 		namespace ReadAll{
-			bool readAll(DataInput&,int& argCount){ return argCount==0; }
+			bool readAll(DataInput&,const int& argCount){ return argCount==0; }
 
 			template<typename T>
 			bool readAll(DataInput& d,int& argCount,MultipleArguments<T>& value){
@@ -101,7 +101,7 @@ namespace RpcInternal{
 		bool callDynamicArray(DataInput& data,std::function<void(Args...)> func){
 			std::tuple<RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>...> argsTuple;
 
-			bool b=RpcInternal::Helpers::Apply::apply([&data](RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>& ... args){
+			const bool b=RpcInternal::Helpers::Apply::apply([&data](RpcInternal::Helpers::ConstRef::remove_const_ref_pack_t<Args>& ... args){
 				return readDynamicArray(data,args...);
 			},argsTuple);
 			if(b) RpcInternal::Helpers::Apply::apply(func,argsTuple);

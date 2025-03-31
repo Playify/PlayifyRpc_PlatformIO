@@ -11,9 +11,9 @@ namespace RpcLogger{
 	};
 
 	template<typename... Args>
-	void logLevel(LogLevel level,Args... args){
+	void logLevel(const LogLevel level,Args... args){
 		auto call=RpcInternal::callRemoteFunction(NULL_STRING,"L",int(level),args...);
-		call.onError([](RpcError e){
+		call.onError([](const RpcError& e){
 			Serial.print("Error printing to RpcLogger: ");
 			e.printStackTrace();
 		});

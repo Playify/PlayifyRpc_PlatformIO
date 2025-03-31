@@ -20,7 +20,7 @@ struct PendingCall{
 		const int32_t callId;
 		RpcInternal::MessageFunc listener=nullptr;
 
-		explicit Shared(int32_t callId):callId(callId){}
+		explicit Shared(const int32_t callId):callId(callId){}
 
 		bool isCancelled=false;
 
@@ -37,7 +37,7 @@ struct PendingCall{
 		}
 
 		std::vector<uint8_t> _success;
-		uint32_t _initialLength;
+		uint32_t _initialLength{};
 		RpcError _error{""};
 		std::function<void(DataInput result)> onSuccess;
 		std::function<void(RpcError)> onError;
@@ -69,10 +69,10 @@ struct PendingCall{
 	};
 
 
-	std::shared_ptr<PendingCall::Shared> _data;
+	std::shared_ptr<Shared> _data;
 
-	explicit PendingCall():_data(){}
-	explicit PendingCall(const std::shared_ptr<PendingCall::Shared>& data):_data(data){}
+	explicit PendingCall()= default;
+	explicit PendingCall(const std::shared_ptr<Shared>& data):_data(data){}
 
 	[[nodiscard]] bool isCancelled() const{
 		return _data&&_data->isCancelled;
@@ -193,7 +193,7 @@ private:
 	const PendingCall&
 	_then(const std::function<void()>& onSuccess,const std::function<void(RpcError error)>& onError) const{
 		return then(
-			{[onSuccess](DataInput data){ onSuccess(); }},
+			{[onSuccess](DataInput){ onSuccess(); }},
 			onError);
 	}
 
@@ -238,7 +238,7 @@ public:
 		return _then(RpcInternal::Helpers::function(onSuccess),onError);
 	}
 	const PendingCall& finally(const std::function<void(bool success)>& callback) const{
-		return then(RpcInternal::Helpers::MakeFunction::make_function([callback](DataInput){callback(true);}),[callback](RpcError){callback(false);});
+		return then(RpcInternal::Helpers::MakeFunction::make_function([callback](DataInput){callback(true);}),[callback](const RpcError&){callback(false);});
 	}
 
 

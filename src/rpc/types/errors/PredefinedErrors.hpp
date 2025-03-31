@@ -1,5 +1,5 @@
 namespace RpcInternal{
-	String quoted(String s){
+	String quoted(const String& s){
 		return s==NULL_STRING?"null":"\""+s+"\"";
 	}
 
@@ -8,7 +8,7 @@ namespace RpcInternal{
 		output.reserve(input.length()*2); // Reserve enough space to avoid frequent reallocations
 
 		for(unsigned int i=0;i<input.length();i++){
-			char c=input.charAt(i);
+			const char c=input.charAt(i);
 			switch(c){
 				case '\"':
 					output+="\\\"";
@@ -49,8 +49,8 @@ namespace RpcInternal{
 	}
 }
 
-struct RpcTypeNotFoundError: public RpcError{
-	explicit RpcTypeNotFoundError(String type):RpcError(
+struct RpcTypeNotFoundError: RpcError{
+	explicit RpcTypeNotFoundError(const String& type):RpcError(
 			"RpcTypeNotFoundError",
 			NULL_STRING,
 			"Type "+RpcInternal::quoted(type)+" does not exist",
@@ -59,8 +59,8 @@ struct RpcTypeNotFoundError: public RpcError{
 			",\"type\":"+RpcInternal::jsonEncode(type)+"}"){}
 };
 
-struct RpcMethodNotFoundError: public RpcError{
-	explicit RpcMethodNotFoundError(String type,String method):RpcError(
+struct RpcMethodNotFoundError: RpcError{
+	explicit RpcMethodNotFoundError(const String& type,const String& method):RpcError(
 			"RpcMethodNotFoundError",
 			NULL_STRING,
 			"Method "+RpcInternal::quoted(method)+" does not exist on type "+RpcInternal::quoted(type),
@@ -70,8 +70,8 @@ struct RpcMethodNotFoundError: public RpcError{
 			",\"method\":"+RpcInternal::jsonEncode(method)+"}"){}
 };
 
-struct RpcMetaMethodNotFoundError: public RpcError{
-	explicit RpcMetaMethodNotFoundError(String type,String meta):RpcError(
+struct RpcMetaMethodNotFoundError: RpcError{
+	explicit RpcMetaMethodNotFoundError(const String& type,const String& meta):RpcError(
 			"RpcMetaMethodNotFoundError",
 			NULL_STRING,
 			"Meta-Method "+RpcInternal::quoted(meta)+" does not exist on type "+RpcInternal::quoted(type),
@@ -83,29 +83,29 @@ struct RpcMetaMethodNotFoundError: public RpcError{
 };
 
 
-struct RpcConnectionError: public RpcError{
+struct RpcConnectionError: RpcError{
 	explicit RpcConnectionError(const char* msg):RpcError(
 			"RpcConnectionError",
 			NULL_STRING,
 			msg,
 			"",
-			"{\"$type\":\"$connection\"}"){}
+			R"({"$type":"$connection"})"){}
 };
 
-struct RpcEvalError: public RpcError{
+struct RpcEvalError: RpcError{
 	explicit RpcEvalError(const char* msg):RpcError(
 			"RpcEvalError",
 			NULL_STRING,
 			msg,
 			"",
-			"{\"$type\":\"$eval\"}"){}
+			R"({"$type":"$eval"})"){}
 };
 
-struct RpcDataError: public RpcError{
+struct RpcDataError: RpcError{
 	explicit RpcDataError(const char* msg):RpcError(
 			"RpcEvalError",
 			NULL_STRING,
 			msg,
 			"",
-			"{\"$type\":\"$eval\"}"){}
+			R"({"$type":"$eval"})"){}
 };

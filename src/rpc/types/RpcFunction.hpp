@@ -4,7 +4,7 @@ public:
 	String type;
 	String method;
 	
-	explicit RpcFunction(){}
+	explicit RpcFunction()= default;
 	
 	explicit RpcFunction(String type,String method):
 		type(std::move(type)),

@@ -2,16 +2,15 @@
 #include <Arduino.h>
 #define NULL_STRING "\xc3\x28"
 
-class DataInput{
-public:
+struct DataInput{
 	uint8_t* _data;
 	uint32_t _available;
 	uint32_t _initialLength;
 
-public:
 	DataInput():
 			_data(nullptr),
-			_available(0)
+			_available(0),
+			_initialLength(0)
 	{}
 	DataInput(uint8_t* data,uint32_t length,uint32_t initialLength):
 			_data(data),
@@ -39,12 +38,12 @@ public:
 	uint32_t index() const{
 		return _initialLength-_available;
 	}
-	DataInput goBack(uint32_t offset) const{
-		return DataInput(
+	DataInput goBack(const uint32_t offset) const{
+		return {
 				_data-offset,
 				_available+offset,
 			_initialLength
-			);
+			};
 	}
 	/*
 
@@ -87,7 +86,7 @@ public:
 		int32_t result=0;
 		uint8_t push=0;
 		while(true){
-			uint8_t read=readByte();
+			const uint8_t read=readByte();
 			if(read==0) return push==0?0:~result;
 			if((read&0x80)==0){
 				result|=read<<push;
@@ -99,7 +98,7 @@ public:
 	}
 
 	String readString(){
-		int32_t len=readLength();
+		const int32_t len=readLength();
 		if(len<0)return NULL_STRING;
 
 		uint8_t arr[len+1];
@@ -110,13 +109,13 @@ public:
 	}
 
 	RpcError readError(){
-		String type=readString();
+		const String type=readString();
 		String from=readString();
 		if(from==NULL_STRING)from="???";
-		String message=readString();
+		const String message=readString();
 		String stackTrace=readString();
 		if(stackTrace==NULL_STRING)stackTrace="";
-		String jsonData=_available?readString():R"json({"$info":"JsonData was not included, due to an old PlayifyRpc version"})json";
+		const String jsonData=_available?readString():R"json({"$info":"JsonData was not included, due to an old PlayifyRpc version"})json";
 		return RpcError(type,from,message,stackTrace,jsonData);
 	}
 
