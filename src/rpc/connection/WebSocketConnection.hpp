@@ -29,6 +29,8 @@ namespace RpcInternal{
 		uint32_t lastTime;
 		uint32_t _reconnect;
 		bool _disconnect;
+		bool _callLoop;
+		bool _wsConnected;
 
 		void setup(const String& rpcToken,const String& host,uint16_t port,const String& path){
 			webSocket.onEvent(onEvent);
@@ -45,7 +47,6 @@ namespace RpcInternal{
 			webSocket.enableHeartbeat(15000,3000,2);
 
 			lastTime=millis();
-			_reconnect=1;
 		}
 
 		void loop(){
@@ -58,19 +59,20 @@ namespace RpcInternal{
 			}
 
 
-			if(_reconnect==0)
+			if(_callLoop)
 				webSocket.loop();
 
-			if(!WiFi.isConnected())_reconnect=1;
+			if(!WiFi.isConnected()){
+				_callLoop=false;
+				_reconnect=0;
+			}else if(_reconnect>deltaTime) _reconnect-=deltaTime;
+			else if(_wsConnected) _reconnect=0;
 			else{
-				if(_reconnect>deltaTime){
-					_reconnect-=deltaTime;
-				}else if(_reconnect){
-					_reconnect=0;
-					webSocket.disconnect();
-					webSocket.begin(_host,_port,createUrl(_path));
-					webSocket.loop();
-				}
+				_callLoop=true;
+				_reconnect=5000;
+				webSocket.disconnect();
+				webSocket.begin(_host,_port,createUrl(_path));
+				webSocket.loop();
 			}
 		}
 
@@ -79,18 +81,20 @@ namespace RpcInternal{
 		void onEvent(WStype_t type,uint8_t* payload,size_t length){
 			switch(type){
 				case WStype_DISCONNECTED:
-					connected=false;
-					doDisconnect();
 					if(!WiFi.isConnected())Serial.println("[Rpc] Error connecting to RPC: Not yet connected to WiFi");
 					else Serial.println("[Rpc] Reconnecting to RPC");
-
-					_reconnect=5000;
+					
+					_wsConnected=false;
+					_callLoop=false;
+					connected=false;
+					doDisconnect();
 					break;
 				case WStype_CONNECTED:
 					Serial.print("[Rpc] Connected to RPC (");
 					Serial.print((char*)payload);
 					Serial.println(")");
-
+					
+					_wsConnected=true;
 					doConnect();
 					break;
 				case WStype_TEXT:
