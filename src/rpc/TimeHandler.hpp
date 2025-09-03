@@ -8,6 +8,9 @@ struct Duration{
 private:
 	constexpr explicit Duration(uint32_t micros):microseconds(micros){}
 public:
+	uint32_t seconds() const{return microseconds/1000000;}
+	uint32_t millis() const{return microseconds/1000;}
+	uint32_t micros() const{return microseconds/1000;}
 
 	static constexpr Duration seconds(uint32_t t){return Duration(t*1000000);}
 	static constexpr Duration millis(uint32_t t){return Duration(t*1000);}

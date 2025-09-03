@@ -2,7 +2,8 @@
 
 namespace RpcHelpers{
 	void callDelayed(unsigned int delayMillis,const std::function<void()>& callback){
-		Rpc::addOnLoop([delayMillis,startTime=millis(),callback]{
+		auto startTime=millis();
+		Rpc::addOnLoop([delayMillis,startTime,callback]{
 			if(millis()-startTime<delayMillis)return false;
 			callback();
 			return true;
