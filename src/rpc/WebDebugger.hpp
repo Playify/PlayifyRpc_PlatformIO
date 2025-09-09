@@ -3,6 +3,7 @@
 #if ESP32
 
 #include "WiFi.h"
+#include "esp_task_wdt.h"
 
 #elif ESP8266
 
@@ -36,7 +37,7 @@ namespace WebDebugger{
 	}
 
 	template<size_t N>
-	bool _tryParse(const String& s,const uint8_t(& arr)[N],uint8_t& pin){
+	bool _tryParse(const String& s,const uint8_t (&arr)[N],uint8_t& pin){
 		if(!_tryParse(s,pin))return false;
 		if(pin>=N)return false;
 		pin=arr[pin];
@@ -54,12 +55,25 @@ namespace WebDebugger{
 		}
 #endif
 
-//Pins must be in order, without skipping any number. Skipping can be done using 255
-#if ESP32
+		//Pins must be in order, without skipping any number. Skipping can be done using 255
+#ifdef ESP32
+		
+#if SOC_TOUCH_SENSOR_NUM
 		PINS('T',T0,T1,T2,T3,T4,T5,T6,T7,T8,T9)
+#endif
+		
+#if NUM_ANALOG_INPUTS==18
 		PINS('A',A0,255,255,A3,A4,A5,A6,A7,255,255,A10,A11,A12,A13,A14,A15,A16,A17,A18,A19)
+#elif NUM_ANALOG_INPUTS==6
+		PINS('A',A0,A1,A2,A3,A4,A5)
+#endif
+		
+#if SOC_DAC_PERIPH_NUM>0
 		PIN(DAC1)
 		PIN(DAC2)
+#endif
+
+		
 #elif ESP8266
 		PINS('D',D0,D1,D2,D3,D4,D5,D6,D7,D8,D9,D10)
 		PIN(A0)
@@ -101,15 +115,16 @@ namespace WebDebugger{
 		if(cmd=="WIFI"){
 			auto status=WiFi.status();
 			static const char* statuses[]{
-					"WL_IDLE_STATUS",
-					"WL_NO_SSID_AVAIL",
-					"WL_SCAN_COMPLETED",
-					"WL_CONNECTED",
-					"WL_CONNECT_FAILED",
-					"WL_CONNECTION_LOST",
-					"WL_WRONG_PASSWORD",
-					"WL_DISCONNECTED",
-					"???"};
+				"WL_IDLE_STATUS",
+				"WL_NO_SSID_AVAIL",
+				"WL_SCAN_COMPLETED",
+				"WL_CONNECTED",
+				"WL_CONNECT_FAILED",
+				"WL_CONNECTION_LOST",
+				"WL_WRONG_PASSWORD",
+				"WL_DISCONNECTED",
+				"???"
+			};
 			return "Wifi status: "+String(status)+"="+statuses[status<=7?status:8];
 		}
 
@@ -119,7 +134,7 @@ namespace WebDebugger{
 		if(i==-1)return "Unknown command: "+cmd;
 		String pinString=cmd.substring(0,i);
 		String value=cmd.substring(i+1);
-		
+
 #ifndef ESP32
 		if(pinString=="AFREQ"){
 			analogWriteFreq(value.toInt());
@@ -237,8 +252,8 @@ namespace WebDebugger{
 			}
 
 			if(auto client=server.accept()){
-				String request=client.readStringUntil('\n');
-				String cmd=request.substring(request.indexOf(' ')+2,
+				const String request=client.readStringUntil('\n');
+				const String cmd=request.substring(request.indexOf(' ')+2,
 											 request.lastIndexOf(' '));//get url, without starting slash
 
 				while(client.connected()){//Skip headers
@@ -255,8 +270,14 @@ namespace WebDebugger{
 					client.stop();
 				}
 			}
-			yield();
+
+			if(_locked){
+				yield();
+#if ESP32
+				esp_task_wdt_reset();
+#endif
+			}
 			// ReSharper disable once CppDFALoopConditionNotUpdated
-		}while(_locked);
+		} while(_locked);
 	}
 }

@@ -1,3 +1,4 @@
+// ReSharper disable CppDFAUnreachableFunctionCall
 #pragma once
 #include "Arduino.h"
 
@@ -6,15 +7,15 @@ struct Duration{
 
 	constexpr Duration():microseconds(){}
 private:
-	constexpr explicit Duration(uint32_t micros):microseconds(micros){}
+	constexpr explicit Duration(const uint32_t micros):microseconds(micros){}
 public:
 	uint32_t seconds() const{return microseconds/1000000;}
 	uint32_t millis() const{return microseconds/1000;}
-	uint32_t micros() const{return microseconds/1000;}
+	uint32_t micros() const{return microseconds;}
 
-	static constexpr Duration seconds(uint32_t t){return Duration(t*1000000);}
-	static constexpr Duration millis(uint32_t t){return Duration(t*1000);}
-	static constexpr Duration micros(uint32_t t){return Duration(t);}
+	static constexpr Duration seconds(const uint32_t t){return Duration(t*1000000);}
+	static constexpr Duration millis(const uint32_t t){return Duration(t*1000);}
+	static constexpr Duration micros(const uint32_t t){return Duration(t);}
 	static constexpr Duration zero(){return Duration(0);}
 	static constexpr Duration maximum(){return Duration(UINT32_MAX);}
 
@@ -33,15 +34,15 @@ public:
 	Duration& operator+=(const Duration& rhs) { return *this = *this + rhs; }
 	constexpr Duration operator-(const Duration& rhs) const { return Duration(microseconds - rhs.microseconds); }
 	Duration& operator-=(const Duration& rhs) { return *this = *this - rhs; }
-	constexpr Duration operator*(uint32_t value) const { return Duration(microseconds * value); }
+	constexpr Duration operator*(const uint32_t value) const { return Duration(microseconds * value); }
 	Duration& operator*=(const uint32_t value) { return *this = *this * value; }
-	constexpr Duration operator/(uint32_t value) const { return Duration(microseconds / value); }
+	constexpr Duration operator/(const uint32_t value) const { return Duration(microseconds / value); }
 	Duration& operator/=(const uint32_t value) { return *this = *this / value; }
 };
 
-constexpr Duration operator "" _s(unsigned long long t){return Duration::seconds(t);}
-constexpr Duration operator "" _ms(unsigned long long t){return Duration::millis(t);}
-constexpr Duration operator "" _us(unsigned long long t){return Duration::micros(t);}
+constexpr Duration operator ""_s(const unsigned long long t){return Duration::seconds(t);}
+constexpr Duration operator ""_ms(const unsigned long long t){return Duration::millis(t);}
+constexpr Duration operator ""_us(const unsigned long long t){return Duration::micros(t);}
 
 
 
@@ -51,68 +52,76 @@ namespace TimeHandler{
 
 
 	//counts down to zero, then return true every time
-	bool waitZero(Duration& timer){
+	inline bool waitZero(Duration& timer){
 		if(timer>deltaTime){
 			timer-=deltaTime;
 			return false;
-		}else{
-			timer=Duration::zero();
-			return true;
 		}
+		timer=Duration::zero();
+		return true;
 	}
 	//counts down to zero, then return true once
-	bool waitZeroOnce(Duration& timer){
+	inline bool waitZeroOnce(Duration& timer){
 		if(!timer)return false;
 		return waitZero(timer);
 	}
 
-	//counts up to target, then return true every time
-	bool waitReach(Duration& timer,Duration target){
-		auto sum=timer+deltaTime;
-		if(sum<timer){//Overflow
-			timer=Duration::maximum();
-			return true;//must be bigger than target
-		}else if(sum<target){
-			timer=sum;
-			return false;
-		}else{
-			timer=target;
-			return true;
-		}
-	}
-	//counts up to target, then return true once
-	bool waitReachOnce(Duration& timer,Duration target){
-		if(timer>=target)return false;
-		return waitReach(timer,target);
-	}
-
-	bool cyclicEvent(Duration& timer,Duration duration){
-		if(timer>duration)timer=duration;
-
+	//counts down to zero, then return true and resets the timer
+	inline bool everyZero(Duration& timer,const Duration duration){
 		if(timer>deltaTime){
 			timer-=deltaTime;
 			return false;
-		}else{
-			if(duration>deltaTime) timer+=duration-deltaTime;
-			else timer=Duration::zero();//Overflow protection for fast timers
-
-			return true;
 		}
+		if(duration>deltaTime) timer+=duration-deltaTime;//Reset timer with overshoot protection
+		else timer=duration;//Overflow protection for fast timers
+		return true;
 	}
-	bool cyclicEvent(Duration& timer,Duration duration,bool resetNow,bool triggerOnReset=true){
+
+	inline bool everyZero(Duration& timer,const Duration duration,const bool resetNow,const bool triggerOnReset=true){
 		if(resetNow){
 			timer=duration;
 			return triggerOnReset;
 		}
-		return cyclicEvent(timer,duration);
+		return everyZero(timer,duration);
 	}
 
-	void setup(){
+	//counts up to target, then return true every time
+	inline bool waitReach(Duration& timer,const Duration target){
+		auto sum=timer+deltaTime;
+		if(sum<timer) sum=Duration::maximum();//Integer Overflow
+		
+		if(sum<target){
+			timer=sum;
+			return false;
+		}
+		timer=target;
+		return true;
+	}
+	//counts up to target, then return true once
+	inline bool waitReachOnce(Duration& timer,const Duration target){
+		if(timer>=target)return false;
+		return waitReach(timer,target);
+	}
+
+	//counts up to target, then return true and resets the timer
+	inline bool everyReach(Duration& timer,const Duration target){
+		auto sum=timer+deltaTime;
+		if(sum<timer) sum=Duration::maximum();//Integer Overflow
+		
+		if(sum<target){
+			timer=sum;
+			return false;
+		}
+		timer=sum-target;
+		return true;
+	}
+
+	inline void setup(){
 		lastTime=micros();
 	}
 
-	void loop(){
-		auto delta=micros()-lastTime;
+	inline void loop(){
+		const auto delta=micros()-lastTime;
 		lastTime+=delta;
 		deltaTime=Duration::micros(delta);
 	}
